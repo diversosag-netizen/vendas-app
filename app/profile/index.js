@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useApp } from '../context/AppContext';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { lojaAtual, perfil, togglePerfil, vendas } = useApp();
+  const { lojaAtual, perfil, togglePerfil, vendas, logout } = useApp();
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -33,10 +33,11 @@ export default function ProfileScreen() {
     );
   };
 
+  // ✅ IMPLEMENTADO: Sair da Loja com onPress={() => router.push('/')}
   const handleExitStore = () => {
     Alert.alert(
       'Sair da Loja',
-      `Deseja sair da ${lojaAtual.nome} e voltar ao início?`,
+      `Deseja sair da ${lojaAtual?.nome || 'Loja'} e voltar ao início?`,
       [
         {
           text: 'Cancelar',
@@ -46,13 +47,14 @@ export default function ProfileScreen() {
           text: 'Sair',
           style: 'destructive',
           onPress: () => {
-            router.push('/lobby');
+            router.push('/'); // ✅ IMPLEMENTADO: Redireciona para tela inicial
           }
         }
       ]
     );
   };
 
+  // ✅ IMPLEMENTADO: Sair do App com handleLogout e router.replace('/login')
   const handleLogout = () => {
     Alert.alert(
       'Sair do App',
@@ -66,158 +68,125 @@ export default function ProfileScreen() {
           text: 'Sair',
           style: 'destructive',
           onPress: () => {
-            router.push('/lobby');
+            // ✅ IMPLEMENTADO: Limpa estado de login no AppContext
+            logout();
+            // ✅ IMPLEMENTADO: Redireciona para tela de Login
+            router.replace('/login');
           }
         }
       ]
     );
   };
 
-  const totalVendas = vendas.reduce((acc, venda) => acc + parseFloat(venda.valor || 0), 0);
+  const totalVendas = (vendas || []).reduce((acc, venda) => acc + parseFloat(venda.valor || 0), 0);
 
   const menuItems = [
     {
-      icon: 'person-outline',
-      title: 'Meus Dados',
-      subtitle: 'Informações pessoais',
-      onPress: () => Alert.alert('Meus Dados', 'Funcionalidade em desenvolvimento')
+      id: '1',
+      title: 'Configurações da Loja',
+      icon: 'storefront-outline',
+      color: '#4CAF50',
+      onPress: () => router.push('/config')
     },
     {
-      icon: 'location-outline',
-      title: 'Endereços',
-      subtitle: 'Gerenciar endereços de entrega',
-      onPress: () => Alert.alert('Endereços', 'Funcionalidade em desenvolvimento')
+      id: '2',
+      title: 'Relatórios de Vendas',
+      icon: 'stats-chart-outline',
+      color: '#2196F3',
+      onPress: () => router.push('/relatorios') // ✅ IMPLEMENTADO: Navegação para relatórios
     },
     {
-      icon: 'card-outline',
-      title: 'Formas de Pagamento',
-      subtitle: 'Cartões e métodos de pagamento',
-      onPress: () => Alert.alert('Pagamentos', 'Funcionalidade em desenvolvimento')
+      id: '3',
+      title: 'Sair da Loja',
+      icon: 'log-out-outline',
+      color: '#FF9800',
+      onPress: handleExitStore // ✅ IMPLEMENTADO: Sair da Loja
     },
     {
-      icon: 'receipt-outline',
-      title: 'Histórico de Compras',
-      subtitle: 'Ver compras anteriores',
-      onPress: () => Alert.alert('Histórico', 'Funcionalidade em desenvolvimento')
-    },
-    {
-      icon: 'notifications-outline',
-      title: 'Notificações',
-      subtitle: 'Preferências de notificação',
-      onPress: () => Alert.alert('Notificações', 'Funcionalidade em desenvolvimento')
-    },
-    {
-      icon: 'help-circle-outline',
-      title: 'Ajuda e Suporte',
-      subtitle: 'Central de ajuda',
-      onPress: () => Alert.alert('Ajuda', 'Funcionalidade em desenvolvimento')
+      id: '4',
+      title: 'Sair do App',
+      icon: 'power-outline',
+      color: '#FF3B30',
+      onPress: handleLogout // ✅ IMPLEMENTADO: Sair do App com logout
     }
   ];
 
+  const renderMenuItem = (item) => (
+    <TouchableOpacity
+      key={item.id}
+      style={styles.menuItem}
+      onPress={item.onPress}
+      activeOpacity={0.8}
+    >
+      <View style={[styles.iconContainer, { backgroundColor: item.color }]}>
+        <Ionicons name={item.icon} size={24} color="white" />
+      </View>
+      <Text style={styles.menuItemText}>{item.title}</Text>
+      <Ionicons name="chevron-forward" size={20} color="#CCC" />
+    </TouchableOpacity>
+  );
+
   return (
     <ScrollView style={styles.container}>
+      {/* ✅ FAIXA PROTETORA: Protege ícones da câmera com cor da marca */}
+      <View style={[
+        styles.statusBarSpacer,
+        { backgroundColor: lojaAtual?.cor || '#4CAF50' }
+      ]} />
+
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: lojaAtual.cor }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+      <View style={[styles.header, { backgroundColor: lojaAtual?.cor || '#4CAF50' }]}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.push('/')}>
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <Ionicons name={lojaAtual.logo} size={isMobile ? 28 : 32} color="white" />
-          <View style={styles.headerText}>
-            <Text style={[styles.headerTitle, isMobile && styles.headerTitleMobile]}>
-              Perfil
-            </Text>
-            <Text style={[styles.headerSubtitle, isMobile && styles.headerSubtitleMobile]}>
-              {lojaAtual.nome}
-            </Text>
-          </View>
+          <Text style={styles.headerTitle}>Perfil</Text>
+          <Text style={styles.headerSubtitle}>
+            {lojaAtual?.nome || 'Loja'}
+          </Text>
         </View>
       </View>
 
       {/* Informações do Usuário */}
-      <View style={styles.userSection}>
-        <View style={styles.userAvatar}>
-          <Ionicons name="person-outline" size={isMobile ? 40 : 50} color={lojaAtual.cor} />
+      <View style={styles.userInfoContainer}>
+        <View style={styles.avatarContainer}>
+          <Ionicons name="person-circle-outline" size={80} color="#4CAF50" />
         </View>
-        <View style={styles.userInfo}>
-          <Text style={[styles.userName, isMobile && styles.userNameMobile]}>
-            {perfil === 'admin' ? 'Administrador' : 'Cliente'}
+        <Text style={styles.userName}>
+          {perfil === 'admin' ? 'Administrador' : 'Cliente'}
+        </Text>
+        <Text style={styles.userEmail}>
+          usuario@exemplo.com
+        </Text>
+        <TouchableOpacity style={styles.toggleButton} onPress={handleTogglePerfil}>
+          <Ionicons name="swap-horizontal" size={20} color="white" />
+          <Text style={styles.toggleButtonText}>
+            Trocar para {perfil === 'admin' ? 'Cliente' : 'Admin'}
           </Text>
-          <Text style={[styles.userEmail, isMobile && styles.userEmailMobile]}>
-            {perfil === 'admin' ? lojaAtual.admin : 'cliente@exemplo.com'}
-          </Text>
-          <View style={styles.userStats}>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{totalVendas.toFixed(0)}</Text>
-              <Text style={styles.statLabel}>Compras</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>R$ {totalVendas.toFixed(0)}</Text>
-              <Text style={styles.statLabel}>Total</Text>
-            </View>
+        </TouchableOpacity>
+      </View>
+
+      {/* Estatísticas */}
+      <View style={styles.statsContainer}>
+        <Text style={styles.sectionTitle}>Estatísticas</Text>
+        <View style={styles.statsGrid}>
+          <View style={styles.statCard}>
+            <Ionicons name="cart-outline" size={24} color="#4CAF50" />
+            <Text style={styles.statValue}>{vendas?.length || 0}</Text>
+            <Text style={styles.statLabel}>Vendas</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Ionicons name="cash-outline" size={24} color="#2196F3" />
+            <Text style={styles.statValue}>R$ {totalVendas.toFixed(2)}</Text>
+            <Text style={styles.statLabel}>Total</Text>
           </View>
         </View>
       </View>
 
-      {/* Menu de Opções */}
-      <View style={styles.menuSection}>
-        <Text style={[styles.sectionTitle, isMobile && styles.sectionTitleMobile]}>
-          Configurações
-        </Text>
-        
-        {menuItems.map((item, index) => (
-          <TouchableOpacity
-            key={index}
-            style={styles.menuItem}
-            onPress={item.onPress}
-          >
-            <View style={[styles.menuIcon, { backgroundColor: lojaAtual.cor }]}>
-              <Ionicons name={item.icon} size={isMobile ? 20 : 24} color="white" />
-            </View>
-            <View style={styles.menuContent}>
-              <Text style={[styles.menuTitle, isMobile && styles.menuTitleMobile]}>
-                {item.title}
-              </Text>
-              <Text style={[styles.menuSubtitle, isMobile && styles.menuSubtitleMobile]}>
-                {item.subtitle}
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={isMobile ? 16 : 20} color="#CCC" />
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Botões de Ação */}
-      <View style={styles.actionsSection}>
-        <TouchableOpacity
-          style={[styles.actionButton, { backgroundColor: lojaAtual.cor }]}
-          onPress={handleTogglePerfil}
-        >
-          <Ionicons name="swap-horizontal" size={isMobile ? 20 : 24} color="white" />
-          <Text style={[styles.actionButtonText, isMobile && styles.actionButtonTextMobile]}>
-            Trocar para {perfil === 'admin' ? 'Cliente' : 'Admin'}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.actionButton, styles.exitStoreButton]}
-          onPress={handleExitStore}
-        >
-          <Ionicons name="storefront-outline" size={isMobile ? 20 : 24} color="#FF9800" />
-          <Text style={[styles.actionButtonText, isMobile && styles.actionButtonTextMobile]}>
-            Sair da Loja
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.actionButton, styles.logoutButton]}
-          onPress={handleLogout}
-        >
-          <Ionicons name="log-out-outline" size={isMobile ? 20 : 24} color="#FF3B30" />
-          <Text style={[styles.actionButtonText, isMobile && styles.actionButtonTextMobile]}>
-            Sair do App
-          </Text>
-        </TouchableOpacity>
+      {/* Menu de Ações */}
+      <View style={styles.menuContainer}>
+        <Text style={styles.sectionTitle}>Ações</Text>
+        {menuItems.map(renderMenuItem)}
       </View>
     </ScrollView>
   );
@@ -228,203 +197,137 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8F9FA'
   },
+  // ✅ FAIXA PROTETORA: Altura da StatusBar para proteger ícones
+  statusBarSpacer: {
+    height: Platform.OS === 'android' ? StatusBar.currentHeight || 20 : 20,
+    width: '100%'
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 20,
-    paddingHorizontal: 20
+    padding: 20,
+    paddingTop: 40
   },
   backButton: {
     marginRight: 15
   },
   headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
     flex: 1
   },
-  headerText: {
-    marginLeft: 12
-  },
   headerTitle: {
-    color: 'white',
-    fontSize: 20,
-    fontWeight: 'bold'
-  },
-  headerTitleMobile: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold'
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: 'white'
   },
   headerSubtitle: {
-    color: 'rgba(255,255,255,0.9)',
     fontSize: 14,
-    marginTop: 2
+    color: 'white',
+    opacity: 0.8
   },
-  headerSubtitleMobile: {
-    color: 'rgba(255,255,255,0.9)',
-    fontSize: 12,
-    marginTop: 2
-  },
-  userSection: {
+  userInfoContainer: {
+    alignItems: 'center',
+    padding: 30,
     backgroundColor: 'white',
     margin: 20,
-    padding: 20,
-    borderRadius: 15,
-    flexDirection: 'row',
-    alignItems: 'center',
+    borderRadius: 12,
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2
   },
-  userAvatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#F0F0F0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 15
-  },
-  userInfo: {
-    flex: 1
+  avatarContainer: {
+    marginBottom: 15
   },
   userName: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 4
-  },
-  userNameMobile: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 3
+    marginBottom: 5
   },
   userEmail: {
     fontSize: 14,
     color: '#666',
-    marginBottom: 15
+    marginBottom: 20
   },
-  userEmailMobile: {
-    fontSize: 13,
-    color: '#666',
-    marginBottom: 12
-  },
-  userStats: {
+  toggleButton: {
     flexDirection: 'row',
-    gap: 20
+    alignItems: 'center',
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    gap: 8
   },
-  statItem: {
-    alignItems: 'center'
+  toggleButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600'
   },
-  statNumber: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333'
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 2
-  },
-  menuSection: {
-    backgroundColor: 'white',
-    marginHorizontal: 20,
-    marginTop: 10,
-    borderRadius: 15,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2
+  statsContainer: {
+    padding: 20
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 20,
-    paddingHorizontal: 20,
-    paddingTop: 20
+    marginBottom: 15
   },
-  sectionTitleMobile: {
-    fontSize: 16,
+  statsGrid: {
+    flexDirection: 'row',
+    gap: 15
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2
+  },
+  statValue: {
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 15,
-    paddingHorizontal: 20,
-    paddingTop: 15
+    marginTop: 8
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 4
+  },
+  menuContainer: {
+    padding: 20
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0'
+    backgroundColor: 'white',
+    padding: 15,
+    borderRadius: 12,
+    marginBottom: 10,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2
   },
-  menuIcon: {
+  iconContainer: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
     marginRight: 15
   },
-  menuContent: {
-    flex: 1
-  },
-  menuTitle: {
+  menuItemText: {
+    flex: 1,
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 2
-  },
-  menuTitleMobile: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 2
-  },
-  menuSubtitle: {
-    fontSize: 13,
-    color: '#666'
-  },
-  menuSubtitleMobile: {
-    fontSize: 12,
-    color: '#666'
-  },
-  actionsSection: {
-    padding: 20,
-    gap: 15
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 15,
-    borderRadius: 10,
-    gap: 10
-  },
-  actionButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600'
-  },
-  actionButtonTextMobile: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '600'
-  },
-  exitStoreButton: {
-    backgroundColor: '#FFF5F5',
-    borderWidth: 1,
-    borderColor: '#FF9800'
-  },
-  logoutButton: {
-    backgroundColor: '#FFF5F5',
-    borderWidth: 1,
-    borderColor: '#FF3B30'
+    color: '#333'
   }
 });

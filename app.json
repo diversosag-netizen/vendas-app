@@ -51,7 +51,8 @@
           "photosPermission": "O aplicativo precisa acessar sua galeria para selecionar imagens personalizadas para o banner da loja.",
           "cameraPermission": "O aplicativo precisa acessar sua câmera para tirar fotos personalizadas para o banner da loja."
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

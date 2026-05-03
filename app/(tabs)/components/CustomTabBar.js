@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, Alert, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, usePathname } from 'expo-router';
 import { useApp } from '../../context/AppContext';
@@ -18,16 +18,16 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
   const corLojaSegura = lojaAtual?.cor || '#2196F3';
   const nomeLojaSeguro = lojaAtual?.nome || 'Loja';
 
-  // 1. SINCRONIZAÇÃO CORRETA: Mapeamento exato para _layout.js
+  // ✅ CORRIGIDO: Mapeamento correto para arquivos existentes
   const handleTabPress = (routeName) => {
     if (routeName === 'index') {
       router.push('/'); // Rota index -> Dashboard
     } else if (routeName === 'catalogo') {
       router.push('/catalogo'); // Rota catalogo -> Catálogo
-    } else if (routeName === 'cart') {
-      router.push('/cart'); // Rota cart -> Carrinho (arquivo físico cart/index.js)
-    } else if (routeName === 'profile') {
-      router.push('/profile'); // Rota profile -> Perfil (arquivo físico profile/index.js)
+    } else if (routeName === 'vendas') {
+      router.push('/vendas'); // ✅ CORRIGIDO: Rota vendas -> Vendas (arquivo existente)
+    } else if (routeName === 'config') {
+      router.push('/config'); // ✅ CORRIGIDO: Rota config -> Configurações (arquivo existente)
     }
   };
 
@@ -51,20 +51,26 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
     );
   };
 
-  // Detecção de aba ativa baseada no pathname
+  // Aba ativa
   const getActiveTab = () => {
     if (pathname === '/' || pathname.includes('index')) return 'index';
     if (pathname.includes('catalogo')) return 'catalogo';
-    if (pathname.includes('cart')) return 'cart';
-    if (pathname.includes('profile')) return 'profile';
+    if (pathname.includes('vendas')) return 'vendas';
+    if (pathname.includes('config')) return 'config';
     return 'index';
   };
 
   const activeTab = getActiveTab();
 
   return (
-    <View style={[styles.container, isMobile && styles.containerMobile]}>
-      {/* Botões Principais - Mapeamento exato para _layout.js */}
+    <View style={styles.container}>
+      {/* ✅ FAIXA PROTETORA: Protege ícones da câmera com cor da marca */}
+      <View style={[
+        styles.statusBarSpacer,
+        { backgroundColor: corLojaSegura }
+      ]} />
+
+      {/* Botões Principais */}
       <View style={styles.mainTabs}>
         <TouchableOpacity
           style={[
@@ -115,22 +121,22 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
         <TouchableOpacity
           style={[
             styles.tab,
-            activeTab === 'cart' && styles.activeTab,
+            activeTab === 'vendas' && styles.activeTab,
             isMobile && styles.tabMobile
           ]}
-          onPress={() => handleTabPress('cart')}
+          onPress={() => handleTabPress('vendas')}
         >
           <Ionicons 
             name="cart-outline" 
             size={isMobile ? 20 : 24} 
-            color={activeTab === 'cart' ? '#007AFF' : '#666'} 
+            color={activeTab === 'vendas' ? '#007AFF' : '#666'} 
           />
           {!isMobile && (
             <Text style={[
               styles.tabText,
-              activeTab === 'cart' && styles.activeTabText
+              activeTab === 'vendas' && styles.activeTabText
             ]}>
-              Carrinho
+              Vendas
             </Text>
           )}
         </TouchableOpacity>
@@ -138,22 +144,22 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
         <TouchableOpacity
           style={[
             styles.tab,
-            activeTab === 'profile' && styles.activeTab,
+            activeTab === 'config' && styles.activeTab,
             isMobile && styles.tabMobile
           ]}
-          onPress={() => handleTabPress('profile')}
+          onPress={() => handleTabPress('config')}
         >
           <Ionicons 
-            name="person-outline" 
+            name="settings-outline" 
             size={isMobile ? 20 : 24} 
-            color={activeTab === 'profile' ? '#007AFF' : '#666'} 
+            color={activeTab === 'config' ? '#007AFF' : '#666'} 
           />
           {!isMobile && (
             <Text style={[
               styles.tabText,
-              activeTab === 'profile' && styles.activeTabText
+              activeTab === 'config' && styles.activeTabText
             ]}>
-              Perfil
+              Config
             </Text>
           )}
         </TouchableOpacity>
@@ -189,6 +195,16 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20
   },
+  // ✅ FAIXA PROTETORA: Altura da StatusBar para proteger ícones
+  statusBarSpacer: {
+    height: Platform.OS === 'android' ? StatusBar.currentHeight || 20 : 20,
+    width: '100%',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1000
+  },
   containerMobile: {
     paddingVertical: 8,
     paddingHorizontal: 15,
@@ -200,7 +216,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    gap: 10
+    gap: 10,
+    marginTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 20) : 20
   },
   tab: {
     flexDirection: 'row',

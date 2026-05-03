@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Dimensions, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Dimensions, Alert, Platform, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useApp } from '../context/AppContext';
@@ -28,116 +28,114 @@ export default function AdminDashboard() {
   const handleCardPress = (card) => {
     if (card.action === 'whatsapp') {
       const message = 'Olá! Preciso de suporte com o Vendas App.';
-      const url = `https://wa.me/5511999999999?text=${encodeURIComponent(message)}`;
-      if (typeof window !== 'undefined') {
-        window.open(url, '_blank');
-      } else {
-        Alert.alert('WhatsApp', 'Para abrir o WhatsApp, acesse pelo navegador.');
-      }
-    } else if (card.route) {
+      const whatsappUrl = `https://wa.me/5511999999999?text=${encodeURIComponent(message)}`;
+      Alert.alert('Suporte', 'Abrindo WhatsApp...', [
+        {
+          text: 'OK',
+          onPress: () => router.push(whatsappUrl)
+        }
+      ]);
+    } else {
       router.push(card.route);
     }
   };
 
-  const filteredCards = cards.filter(card => !card.adminOnly || perfil === 'admin');
+  const renderCard = (card) => {
+    if (card.adminOnly && perfil !== 'admin') return null;
+    
+    return (
+      <TouchableOpacity
+        key={card.label}
+        style={[
+          styles.card,
+          { backgroundColor: card.color },
+          isMobile && styles.cardMobile
+        ]}
+        onPress={() => handleCardPress(card)}
+        activeOpacity={0.8}
+      >
+        <Ionicons name={card.icon} size={32} color="white" />
+        <Text style={styles.cardText}>{card.label}</Text>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <ScrollView style={styles.container}>
-      {/* Header com Banner */}
-      {bannerLojaAtual ? (
-        <Image 
-          source={{ uri: bannerLojaAtual }} 
-          style={[styles.bannerImage, { width: screenWidth, height: 150 }]} 
-          resizeMode="cover" 
-        />
-      ) : (
-        <View style={[styles.header, { backgroundColor: corLojaSegura }]}>
+      {/* ✅ FAIXA PROTETORA: Protege ícones da câmera com cor da marca */}
+      <View style={[
+        styles.statusBarSpacer,
+        { backgroundColor: corLojaSegura }
+      ]} />
+
+      <View style={styles.mainContainer}>
+        {/* Header */}
+        <View style={[
+          styles.header,
+          { 
+            backgroundColor: corLojaSegura,
+            zIndex: 1000
+          }
+        ]}>
           <View style={styles.headerContent}>
             <Ionicons name="storefront-outline" size={32} color="white" />
             <Text style={styles.headerTitle}>
               {nomeLojaSeguro}
             </Text>
+            <Text style={styles.headerSubtitle}>
+              {perfil === 'admin' ? 'Painel Administrativo' : 'Painel de Vendas'}
+            </Text>
           </View>
         </View>
-      )}
 
-      {/* Cards de Ação */}
-      <View style={styles.cardsContainer}>
-        <Text style={styles.sectionTitle}>Painel de Controle</Text>
-        <View style={styles.cardsGrid}>
-          {filteredCards.map((card, index) => (
-            <TouchableOpacity
-              key={index}
-              style={[styles.card, { backgroundColor: card.color }]}
-              onPress={() => handleCardPress(card)}
-              activeOpacity={0.8}
-            >
-              <Ionicons name={card.icon} size={32} color="white" />
-              <Text style={styles.cardLabel}>{card.label}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
-      {/* Estatísticas */}
-      <View style={styles.statsContainer}>
-        <Text style={styles.sectionTitle}>Estatísticas</Text>
-        <View style={styles.statsGrid}>
-          <View style={styles.statCard}>
-            <Ionicons name="cart-outline" size={24} color="#4CAF50" />
-            <Text style={styles.statValue}>R$ {totalVendas.toFixed(2)}</Text>
-            <Text style={styles.statLabel}>Total de Vendas</Text>
+        {/* Banner */}
+        {bannerLojaAtual ? (
+          <Image
+            source={{ uri: bannerLojaAtual }}
+            style={styles.banner}
+            resizeMode="cover"
+          />
+        ) : (
+          <View style={[styles.bannerPlaceholder, { backgroundColor: corLojaSegura }]}>
+            <Ionicons name="image-outline" size={40} color="white" />
+            <Text style={styles.bannerText}>Banner da Loja</Text>
           </View>
-          <View style={styles.statCard}>
-            <Ionicons name="storefront-outline" size={24} color="#2196F3" />
-            <Text style={styles.statValue}>{totalItens}</Text>
-            <Text style={styles.statLabel}>Lojas Ativas</Text>
+        )}
+
+        {/* Estatísticas */}
+        <View style={styles.statsContainer}>
+          <Text style={styles.sectionTitle}>Estatísticas</Text>
+          <View style={styles.statsGrid}>
+            <View style={styles.statCard}>
+              <Ionicons name="cart-outline" size={24} color="#4CAF50" />
+              <Text style={styles.statValue}>R$ {totalVendas.toFixed(2)}</Text>
+              <Text style={styles.statLabel}>Vendas Totais</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Ionicons name="storefront-outline" size={24} color="#2196F3" />
+              <Text style={styles.statValue}>{totalItens}</Text>
+              <Text style={styles.statLabel}>Lojas</Text>
+            </View>
           </View>
         </View>
-      </View>
 
-      {/* Perfil e Troca de Loja */}
-      <View style={styles.profileContainer}>
-        <View style={styles.profileHeader}>
-          <Ionicons name="person-outline" size={24} color="#666" />
-          <Text style={styles.profileTitle}>Perfil: {perfil === 'admin' ? 'Administrador' : 'Cliente'}</Text>
+        {/* Cards de Ação */}
+        <View style={styles.cardsContainer}>
+          <Text style={styles.sectionTitle}>Ações Rápidas</Text>
+          <View style={styles.cardsGrid}>
+            {cards.map(renderCard)}
+          </View>
         </View>
-        
-        {/* Troca de Loja */}
-        <View style={styles.storeSelector}>
-          <Text style={styles.storeSelectorTitle}>Loja Atual:</Text>
+
+        {/* Loja Atual */}
+        <View style={styles.currentStoreContainer}>
+          <Text style={styles.sectionTitle}>Loja Atual</Text>
           <View style={styles.currentStore}>
             <Text style={styles.currentStoreText}>
               {nomeLojaSeguro}
             </Text>
           </View>
-          <View style={styles.storeButtons}>
-            {lojas?.map((loja) => (
-              <TouchableOpacity
-                key={loja.id}
-                style={[
-                  styles.storeButton,
-                  { backgroundColor: loja.cor },
-                  lojaAtual?.id === loja.id && styles.storeButtonActive
-                ]}
-                onPress={() => trocarLoja && trocarLoja(loja.id)}
-              >
-                <Text style={styles.storeButtonText}>{loja.nome.split(' ')[0]}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
         </View>
-
-        {/* Botão de Troca de Perfil */}
-        <TouchableOpacity 
-          style={styles.toggleButton} 
-          onPress={togglePerfil}
-        >
-          <Ionicons name="swap-horizontal" size={20} color="white" />
-          <Text style={styles.toggleButtonText}>
-            Trocar para {perfil === 'admin' ? 'Cliente' : 'Admin'}
-          </Text>
-        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -148,10 +146,23 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8F9FA'
   },
+  // ✅ FAIXA PROTETORA: Altura da StatusBar para proteger ícones
+  statusBarSpacer: {
+    height: Platform.OS === 'android' ? StatusBar.currentHeight || 20 : 20,
+    width: '100%'
+  },
+  mainContainer: {
+    flex: 1
+  },
   header: {
-    paddingVertical: 30,
-    paddingHorizontal: 20,
-    alignItems: 'center'
+    padding: 20,
+    position: 'relative',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    zIndex: 1000
   },
   headerContent: {
     alignItems: 'center',
@@ -160,54 +171,41 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: 'white',
-    textAlign: 'center'
+    color: 'white'
   },
-  bannerImage: {
+  headerSubtitle: {
+    fontSize: 14,
+    color: 'white',
+    opacity: 0.8
+  },
+  banner: {
+    width: '100%',
     height: 150,
     backgroundColor: '#F0F0F0'
   },
-  cardsContainer: {
-    padding: 20
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 20
-  },
-  cardsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: 15
-  },
-  card: {
-    width: '48%',
-    padding: 20,
-    borderRadius: 12,
-    alignItems: 'center',
+  bannerPlaceholder: {
+    width: '100%',
+    height: 150,
     justifyContent: 'center',
-    minHeight: 100,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4
+    alignItems: 'center',
+    gap: 10
   },
-  cardLabel: {
+  bannerText: {
+    fontSize: 16,
     color: 'white',
-    fontSize: 14,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginTop: 8
+    fontWeight: '600'
   },
   statsContainer: {
     padding: 20
   },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 15
+  },
   statsGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     gap: 15
   },
   statCard: {
@@ -223,7 +221,7 @@ const styles = StyleSheet.create({
     shadowRadius: 2
   },
   statValue: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
     marginTop: 8
@@ -231,86 +229,55 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: 12,
     color: '#666',
-    textAlign: 'center',
     marginTop: 4
   },
-  profileContainer: {
+  cardsContainer: {
     padding: 20
   },
-  profileHeader: {
+  cardsGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 15
+  },
+  card: {
+    width: '48%',
+    backgroundColor: '#4CAF50',
+    padding: 20,
+    borderRadius: 12,
     alignItems: 'center',
     gap: 10,
-    marginBottom: 20
-  },
-  profileTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333'
-  },
-  storeSelector: {
-    backgroundColor: 'white',
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 20,
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2
   },
-  storeSelectorTitle: {
+  cardMobile: {
+    width: '100%'
+  },
+  cardText: {
+    color: 'white',
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 10
+    textAlign: 'center'
+  },
+  currentStoreContainer: {
+    padding: 20
   },
   currentStore: {
-    backgroundColor: '#F0F0F0',
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 15
+    backgroundColor: 'white',
+    padding: 15,
+    borderRadius: 12,
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2
   },
   currentStoreText: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center'
-  },
-  storeButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 10
-  },
-  storeButton: {
-    flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    alignItems: 'center'
-  },
-  storeButtonActive: {
-    borderWidth: 2,
-    borderColor: '#333'
-  },
-  storeButtonText: {
-    color: 'white',
-    fontSize: 12,
+    fontSize: 16,
     fontWeight: '600',
-    textAlign: 'center'
-  },
-  toggleButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#007AFF',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    gap: 8
-  },
-  toggleButtonText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '600'
+    color: '#333'
   }
 });

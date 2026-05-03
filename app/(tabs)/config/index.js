@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Image, Alert, Dimensions, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Image, Alert, Dimensions, ActivityIndicator, Platform, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { useApp } from '../../context/AppContext';
+
+// ✅ CORRIGIDO: Variável bannerHeight definida fora do componente
+const bannerHeight = 150;
 
 export default function ConfigScreen() {
   const router = useRouter();
@@ -24,23 +27,22 @@ export default function ConfigScreen() {
   const [isUploading, setIsUploading] = useState(false);
 
   const screenWidth = Dimensions.get('window').width;
-  const bannerHeight = 150;
 
   // Função para selecionar imagem com permissões corretas
   const pickImage = async () => {
     try {
       setIsLoading(true);
       
-      // Solicitar permissão no Android
-      if (Platform.OS === 'android') {
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (status !== 'granted') {
-          Alert.alert('Permissão negada', 'Precisamos de acesso à galeria para selecionar imagens.');
-          return;
-        }
+      // Solicitar permissões da biblioteca de mídia
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert('Permissão Negada', 'Precisamos de acesso à galeria para selecionar uma imagem.');
+        setIsLoading(false);
+        return;
       }
 
-      // Abrir galeria
+      // Abrir o seletor de imagens
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
@@ -49,10 +51,9 @@ export default function ConfigScreen() {
       });
 
       if (!result.canceled) {
-        const selectedAsset = result.assets[0];
-        setBannerUrl(selectedAsset.uri);
-        setPreviewUrl(selectedAsset.uri);
-        Alert.alert('Sucesso', 'Imagem selecionada com sucesso!');
+        const selectedImage = result.assets[0];
+        setBannerUrl(selectedImage.uri);
+        setPreviewUrl(selectedImage.uri);
       }
     } catch (error) {
       console.error('Erro ao selecionar imagem:', error);
@@ -62,46 +63,35 @@ export default function ConfigScreen() {
     }
   };
 
-  // Função para visualizar banner
-  const handlePreview = () => {
-    if (!bannerUrl || !bannerUrl.trim()) {
-      Alert.alert('ATENÇÃO', 'Digite uma URL ou selecione uma imagem!');
-      return;
-    }
-    
-    setPreviewUrl(bannerUrl.trim());
-    Alert.alert('PREVIEW ATUALIZADO', 'Preview atualizado com sucesso!');
-  };
-
-  // Função para salvar banner
-  const handleSave = () => {
-    if (!bannerUrl || !bannerUrl.trim()) {
-      Alert.alert('ATENÇÃO', 'Digite uma URL ou selecione uma imagem!');
+  // Função para fazer upload do banner
+  const uploadBanner = async () => {
+    if (!bannerUrl) {
+      Alert.alert('Erro', 'Por favor, selecione uma imagem primeiro.');
       return;
     }
 
-    setIsUploading(true);
-    
-    // Simular salvamento
-    setTimeout(() => {
-      if (atualizarBannerLoja) {
-        atualizarBannerLoja(lojaAtual?.id || '1', bannerUrl.trim());
-      }
+    try {
+      setIsUploading(true);
       
-      Alert.alert('SUCESSO', 'Banner salvo com sucesso!', [
-        {
-          text: 'OK',
-          onPress: () => router.push('/')
-        }
-      ]);
+      // Simulação de upload (em um app real, você faria upload para um servidor)
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Atualizar o banner no contexto
+      await atualizarBannerLoja(bannerUrl);
+      
+      Alert.alert('Sucesso', 'Banner atualizado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao fazer upload:', error);
+      Alert.alert('Erro', 'Não foi possível atualizar o banner. Tente novamente.');
+    } finally {
       setIsUploading(false);
-    }, 1500);
+    }
   };
 
-  // Função para remover banner
-  const handleRemoveBanner = () => {
+  // Função para remover o banner
+  const removeBanner = () => {
     Alert.alert(
-      'REMOVER BANNER',
+      'Remover Banner',
       'Deseja remover o banner atual?',
       [
         {
@@ -114,10 +104,7 @@ export default function ConfigScreen() {
           onPress: () => {
             setBannerUrl('');
             setPreviewUrl('');
-            if (atualizarBannerLoja) {
-              atualizarBannerLoja(lojaAtual?.id || '1', null);
-            }
-            Alert.alert('SUCESSO', 'Banner removido com sucesso!');
+            Alert.alert('Sucesso', 'Banner removido com sucesso!');
           }
         }
       ]
@@ -126,6 +113,12 @@ export default function ConfigScreen() {
 
   return (
     <ScrollView style={styles.container}>
+      {/* ✅ FAIXA PROTETORA: Protege ícones da câmera com cor da marca */}
+      <View style={[
+        styles.statusBarSpacer,
+        { backgroundColor: corLoja }
+      ]} />
+
       {/* Header */}
       <View style={[styles.header, { backgroundColor: corLoja }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.push('/')}>
@@ -137,132 +130,126 @@ export default function ConfigScreen() {
         </View>
       </View>
 
-      {/* Informações do Usuário */}
-      <View style={styles.userInfoContainer}>
-        <Text style={styles.sectionTitle}>Informações do Usuário</Text>
-        <View style={styles.userInfoCard}>
-          <View style={styles.userInfoRow}>
-            <Ionicons name="person-outline" size={20} color="#666" />
-            <Text style={styles.userInfoLabel}>Nome:</Text>
-            <Text style={styles.userInfoValue}>{usuarioNome}</Text>
-          </View>
-          <View style={styles.userInfoRow}>
-            <Ionicons name="settings-outline" size={20} color="#666" />
-            <Text style={styles.userInfoLabel}>Perfil:</Text>
-            <Text style={styles.userInfoValue}>{usuarioPerfil === 'admin' ? 'Administrador' : 'Cliente'}</Text>
-          </View>
-          <View style={styles.userInfoRow}>
-            <Ionicons name="storefront-outline" size={20} color="#666" />
-            <Text style={styles.userInfoLabel}>Loja:</Text>
-            <Text style={styles.userInfoValue}>{nomeLoja}</Text>
-          </View>
-        </View>
-      </View>
-
       {/* Banner Preview */}
       <View style={styles.bannerContainer}>
         <Text style={styles.sectionTitle}>Banner da Loja</Text>
         
         {previewUrl ? (
-          <Image
-            source={{ uri: previewUrl }}
-            style={[
-              styles.bannerPreview,
-              { width: screenWidth - 40, height: bannerHeight }
-            ]}
-            resizeMode="cover"
-          />
+          <View style={styles.bannerPreview}>
+            <Image
+              source={{ uri: previewUrl }}
+              style={styles.bannerImage}
+              resizeMode="cover"
+            />
+            <View style={styles.bannerActions}>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.removeButton]}
+                onPress={removeBanner}
+              >
+                <Ionicons name="trash-outline" size={20} color="white" />
+                <Text style={styles.actionButtonText}>Remover</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         ) : (
-          <View style={[
-            styles.bannerPlaceholder,
-            { backgroundColor: corLoja, width: screenWidth - 40, height: bannerHeight }
-          ]}>
+          <View style={[styles.bannerPlaceholder, { backgroundColor: corLoja }]}>
             <Ionicons name="image-outline" size={40} color="white" />
-            <Text style={styles.bannerPlaceholderText}>
-              Nenhum banner configurado
-            </Text>
+            <Text style={styles.bannerPlaceholderText}>Nenhum banner configurado</Text>
           </View>
         )}
       </View>
 
-      {/* URL Input */}
-      <View style={styles.urlContainer}>
-        <Text style={styles.sectionTitle}>URL do Banner</Text>
-        <TextInput
-          style={styles.urlInput}
-          value={bannerUrl}
-          onChangeText={setBannerUrl}
-          placeholder="https://exemplo.com/banner.jpg"
-          multiline
-        />
-        <Text style={styles.urlHint}>
-          Digite a URL de uma imagem ou use o botão abaixo para selecionar do dispositivo
-        </Text>
-      </View>
-
-      {/* Action Buttons */}
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity 
-          style={styles.previewButton} 
-          onPress={handlePreview}
-          disabled={isLoading || isUploading}
-        >
-          <Ionicons name="eye-outline" size={20} color="#007AFF" />
-          <Text style={styles.previewButtonText}>Visualizar</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.selectButton} 
+      {/* Upload Controls */}
+      <View style={styles.uploadContainer}>
+        <Text style={styles.sectionTitle}>Gerenciar Banner</Text>
+        
+        <TouchableOpacity
+          style={[styles.uploadButton, { backgroundColor: corLoja }]}
           onPress={pickImage}
-          disabled={isLoading || isUploading}
+          disabled={isLoading}
         >
           {isLoading ? (
-            <ActivityIndicator size="small" color="#4CAF50" />
+            <ActivityIndicator size="small" color="white" />
           ) : (
-            <Ionicons name="image-outline" size={20} color="#4CAF50" />
+            <Ionicons name="image-outline" size={24} color="white" />
           )}
-          <Text style={styles.selectButtonText}>
+          <Text style={styles.uploadButtonText}>
             {isLoading ? 'Carregando...' : 'Selecionar Imagem'}
           </Text>
         </TouchableOpacity>
+
+        {bannerUrl && (
+          <TouchableOpacity
+            style={[styles.saveButton, { backgroundColor: '#4CAF50' }]}
+            onPress={uploadBanner}
+            disabled={isUploading}
+          >
+            {isUploading ? (
+              <ActivityIndicator size="small" color="white" />
+            ) : (
+              <Ionicons name="save-outline" size={20} color="white" />
+            )}
+            <Text style={styles.saveButtonText}>
+              {isUploading ? 'Salvando...' : 'Salvar Banner'}
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
 
-      {/* Save and Remove */}
-      <View style={styles.actionContainer}>
-        <TouchableOpacity 
-          style={[styles.saveButton, { backgroundColor: corLoja }]} 
-          onPress={handleSave}
-          disabled={isLoading || isUploading}
-        >
-          {isUploading ? (
-            <ActivityIndicator size="small" color="white" />
-          ) : (
-            <Ionicons name="save-outline" size={20} color="white" />
-          )}
-          <Text style={styles.saveButtonText}>
-            {isUploading ? 'Salvando...' : 'Salvar Banner'}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.removeButton} 
-          onPress={handleRemoveBanner}
-          disabled={isLoading || isUploading}
-        >
-          <Ionicons name="trash-outline" size={20} color="#FF3B30" />
-          <Text style={styles.removeButtonText}>Remover Banner</Text>
-        </TouchableOpacity>
+      {/* Store Info */}
+      <View style={styles.infoContainer}>
+        <Text style={styles.sectionTitle}>Informações da Loja</Text>
+        
+        <View style={styles.infoCard}>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Nome:</Text>
+            <Text style={styles.infoValue}>{nomeLoja}</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Cor:</Text>
+            <View style={[styles.colorIndicator, { backgroundColor: corLoja }]} />
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Usuário:</Text>
+            <Text style={styles.infoValue}>{usuarioNome}</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Perfil:</Text>
+            <Text style={styles.infoValue}>{usuarioPerfil}</Text>
+          </View>
+        </View>
       </View>
 
-      {/* Recommendations */}
-      <View style={styles.recommendations}>
-        <Text style={styles.recommendationsTitle}>Recomendações</Text>
-        <Text style={styles.recommendationsText}>
-          • Use imagens com proporção 16:9 (ex: 800x450px)
-          {'\n'}• Formatos aceitos: JPG, PNG, WebP
-          {'\n'}• Tamanho máximo: 2MB
-          {'\n'}• URLs devem ser acessíveis publicamente
-        </Text>
+      {/* Additional Settings */}
+      <View style={styles.settingsContainer}>
+        <Text style={styles.sectionTitle}>Configurações Adicionais</Text>
+        
+        <TouchableOpacity style={styles.settingItem}>
+          <Ionicons name="notifications-outline" size={24} color="#666" />
+          <View style={styles.settingContent}>
+            <Text style={styles.settingTitle}>Notificações</Text>
+            <Text style={styles.settingDescription}>Gerenciar alertas e notificações</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#CCC" />
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.settingItem}>
+          <Ionicons name="language-outline" size={24} color="#666" />
+          <View style={styles.settingContent}>
+            <Text style={styles.settingTitle}>Idioma</Text>
+            <Text style={styles.settingDescription}>Português (Brasil)</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#CCC" />
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.settingItem}>
+          <Ionicons name="shield-outline" size={24} color="#666" />
+          <View style={styles.settingContent}>
+            <Text style={styles.settingTitle}>Privacidade</Text>
+            <Text style={styles.settingDescription}>Configurar privacidade e segurança</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#CCC" />
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -272,6 +259,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8F9FA'
+  },
+  // ✅ FAIXA PROTETORA: Altura da StatusBar para proteger ícones
+  statusBarSpacer: {
+    height: Platform.OS === 'android' ? StatusBar.currentHeight || 20 : 20,
+    width: '100%'
   },
   header: {
     flexDirection: 'row',
@@ -295,7 +287,7 @@ const styles = StyleSheet.create({
     color: 'white',
     opacity: 0.8
   },
-  userInfoContainer: {
+  bannerContainer: {
     padding: 20
   },
   sectionTitle: {
@@ -304,45 +296,47 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 15
   },
-  userInfoCard: {
-    backgroundColor: 'white',
-    padding: 15,
+  bannerPreview: {
     borderRadius: 12,
+    overflow: 'hidden',
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2
   },
-  userInfoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    gap: 10
-  },
-  userInfoLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#666',
-    flex: 1
-  },
-  userInfoValue: {
-    fontSize: 14,
-    color: '#333',
-    flex: 2
-  },
-  bannerContainer: {
-    padding: 20,
-    alignItems: 'center'
-  },
-  bannerPreview: {
-    borderRadius: 12,
+  bannerImage: {
+    width: '100%',
+    height: bannerHeight,
     backgroundColor: '#F0F0F0'
   },
+  bannerActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    padding: 10,
+    backgroundColor: 'rgba(0,0,0,0.3)'
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    gap: 4
+  },
+  removeButton: {
+    backgroundColor: '#FF3B30'
+  },
+  actionButtonText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '600'
+  },
   bannerPlaceholder: {
-    borderRadius: 12,
+    height: bannerHeight,
     justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: 12,
     gap: 10
   },
   bannerPlaceholderText: {
@@ -350,126 +344,111 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600'
   },
-  urlContainer: {
-    padding: 20,
-    backgroundColor: 'white',
-    margin: 20,
+  uploadContainer: {
+    padding: 20
+  },
+  uploadButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 15,
     borderRadius: 12,
+    gap: 8,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    marginBottom: 15
+  },
+  uploadButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold'
+  },
+  saveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 15,
+    borderRadius: 12,
+    gap: 8,
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2
-  },
-  urlInput: {
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: '#F8F9FA',
-    minHeight: 60,
-    textAlignVertical: 'top'
-  },
-  urlHint: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 8,
-    lineHeight: 16
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    gap: 15
-  },
-  previewButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#007AFF',
-    gap: 8
-  },
-  previewButtonText: {
-    color: '#007AFF',
-    fontSize: 14,
-    fontWeight: '600'
-  },
-  selectButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#4CAF50',
-    gap: 8
-  },
-  selectButtonText: {
-    color: '#4CAF50',
-    fontSize: 14,
-    fontWeight: '600'
-  },
-  actionContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    gap: 15,
-    marginTop: 10
-  },
-  saveButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 12,
-    borderRadius: 8,
-    gap: 8
   },
   saveButtonText: {
     color: 'white',
-    fontSize: 14,
-    fontWeight: '600'
+    fontSize: 16,
+    fontWeight: 'bold'
   },
-  removeButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#FF3B30',
-    gap: 8
+  infoContainer: {
+    padding: 20
   },
-  removeButtonText: {
-    color: '#FF3B30',
-    fontSize: 14,
-    fontWeight: '600'
-  },
-  recommendations: {
-    padding: 20,
+  infoCard: {
     backgroundColor: 'white',
-    margin: 20,
     borderRadius: 12,
+    padding: 20,
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2
   },
-  recommendationsTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 10
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0'
   },
-  recommendationsText: {
+  infoLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333'
+  },
+  infoValue: {
+    fontSize: 16,
+    color: '#666'
+  },
+  colorIndicator: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#E0E0E0'
+  },
+  settingsContainer: {
+    padding: 20
+  },
+  settingItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    padding: 15,
+    borderRadius: 12,
+    marginBottom: 10,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2
+  },
+  settingContent: {
+    flex: 1,
+    marginLeft: 15
+  },
+  settingTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 2
+  },
+  settingDescription: {
     fontSize: 14,
-    color: '#666',
-    lineHeight: 20
+    color: '#666'
   }
 });

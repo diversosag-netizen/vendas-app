@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, FlatList } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, FlatList, Platform, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useApp } from '../context/AppContext';
-import { Platform } from 'react-native';
 
 export default function CatalogoScreen() {
   const router = useRouter();
@@ -19,6 +18,11 @@ export default function CatalogoScreen() {
   const handleSelecionarProduto = (produto) => {
     selecionarProduto(produto);
     router.push('/vendas');
+  };
+
+  // ✅ IMPLEMENTAÇÃO: Atalho de navegação direta para Estoque
+  const handleGerenciarEstoque = () => {
+    router.push('/estoque');
   };
 
   const renderProduto = ({ item }) => (
@@ -71,6 +75,29 @@ export default function CatalogoScreen() {
 
   return (
     <ScrollView style={styles.container}>
+      {/* ✅ FAIXA PROTETORA: Protege ícones da câmera com cor da marca */}
+      <View style={[
+        styles.statusBarSpacer,
+        { backgroundColor: lojaAtual?.cor || '#4CAF50' }
+      ]} />
+
+      <View style={[
+        styles.header,
+        { 
+          backgroundColor: lojaAtual?.cor || '#4CAF50',
+          zIndex: 1000
+        }
+      ]}>
+        <View style={styles.headerContent}>
+          <Text style={styles.headerTitle}>
+            Catálogo - {lojaAtual?.nome || 'Loja'}
+          </Text>
+          <Text style={styles.headerSubtitle}>
+            {produtosSeguros.length} produtos disponíveis
+          </Text>
+        </View>
+      </View>
+
       {/* Banner */}
       {bannerLojaAtual ? (
         <Image
@@ -82,26 +109,13 @@ export default function CatalogoScreen() {
           resizeMode="cover"
         />
       ) : (
-        <View style={[
-          styles.bannerPlaceholder,
-          { backgroundColor: lojaAtual?.cor || '#4CAF50' }
-        ]}>
+        <View style={[styles.bannerPlaceholder, { backgroundColor: lojaAtual?.cor || '#4CAF50' }]}>
           <Ionicons name="storefront-outline" size={40} color="white" />
           <Text style={styles.bannerText}>
             {lojaAtual?.nome || 'Catálogo'}
           </Text>
         </View>
       )}
-
-      {/* Cabeçalho */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>
-          Catálogo - {lojaAtual?.nome || 'Loja'}
-        </Text>
-        <Text style={styles.headerSubtitle}>
-          {produtosSeguros.length} produtos disponíveis
-        </Text>
-      </View>
 
       {/* Lista de Produtos */}
       {produtosSeguros.length > 0 ? (
@@ -123,11 +137,11 @@ export default function CatalogoScreen() {
           </Text>
           <TouchableOpacity
             style={styles.emptyStateButton}
-            onPress={() => router.push('/estoque')}
+            onPress={handleGerenciarEstoque}
           >
-            <Ionicons name="add-circle-outline" size={20} color="white" />
+            <Ionicons name="arrow-forward-outline" size={20} color="white" />
             <Text style={styles.emptyStateButtonText}>
-              Adicionar Produto
+              Ir para Estoque
             </Text>
           </TouchableOpacity>
         </View>
@@ -140,6 +154,35 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8F9FA'
+  },
+  // ✅ FAIXA PROTETORA: Altura da StatusBar para proteger ícones
+  statusBarSpacer: {
+    height: Platform.OS === 'android' ? StatusBar.currentHeight || 20 : 20,
+    width: '100%'
+  },
+  header: {
+    padding: 20,
+    position: 'relative',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    zIndex: 1000
+  },
+  headerContent: {
+    alignItems: 'center',
+    gap: 5
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: 'white'
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: 'white',
+    opacity: 0.8
   },
   banner: {
     height: 150,
@@ -155,22 +198,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: 'white'
-  },
-  header: {
-    padding: 20,
-    backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0'
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333'
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 5
   },
   produtosList: {
     padding: 20
@@ -263,7 +290,7 @@ const styles = StyleSheet.create({
   emptyStateButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#2196F3',
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 8,

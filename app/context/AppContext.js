@@ -31,6 +31,17 @@ export const AppProvider = ({ children }) => {
     console.log('Toggle perfil');
   };
 
+  // ✅ IMPLEMENTAÇÃO: Função de logout para limpar estado do usuário
+  const logout = () => {
+    setLojaAtiva('1'); // Resetar para loja padrão
+    setSaldo(0);
+    setVendas([]);
+    setEstoque([]);
+    setClientes([]);
+    setProdutos([]);
+    setProdutoSelecionado(null);
+  };
+
   // Função para adicionar venda
   const adicionarVenda = (venda) => {
     setVendas(prev => [...prev, venda]);
@@ -72,6 +83,7 @@ export const AppProvider = ({ children }) => {
       produtoSelecionado,
       trocarLoja,
       togglePerfil,
+      logout, // ✅ ADICIONADA: Função de logout
       adicionarVenda,
       adicionarAoEstoque,
       adicionarCliente,
