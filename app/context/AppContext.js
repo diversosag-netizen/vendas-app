@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState } from 'react';
 
 const AppContext = createContext();
 
@@ -67,6 +67,25 @@ export const AppProvider = ({ children }) => {
     setProdutoSelecionado(produto);
   };
 
+  // ✅ IMPLEMENTAR: Função para atualizar banner da loja
+  const atualizarBannerLoja = async (bannerUrl) => {
+    try {
+      // Encontrar a loja ativa no array
+      const lojaIndex = lojas.findIndex(loja => loja.id === lojaAtiva);
+      if (lojaIndex !== -1) {
+        // Atualizar a propriedade bannerImage
+        lojas[lojaIndex].bannerImage = bannerUrl;
+        // Forçar re-renderização do contexto
+        setLojaAtiva(lojaAtiva);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Erro ao atualizar banner:', error);
+      return false;
+    }
+  };
+
   // 2. OBJETO DE FALLBACK GARANTIDO para evitar undefined properties
   const lojaAtualSegura = lojas.find(loja => loja.id === lojaAtiva) || lojas[0];
 
@@ -89,6 +108,7 @@ export const AppProvider = ({ children }) => {
       adicionarCliente,
       adicionarProduto,
       selecionarProduto,
+      atualizarBannerLoja, // ✅ ADICIONADA: Função para atualizar banner
       // Dados da loja atual com fallback garantido
       lojaAtual: lojaAtualSegura,
       bannerLojaAtual: lojaAtualSegura?.bannerImage || null

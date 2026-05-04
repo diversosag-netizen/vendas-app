@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, Platform, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useApp } from '../context/AppContext';
@@ -28,20 +28,16 @@ export default function LoginScreen() {
     // Simulação de login
     setTimeout(() => {
       // Login bem sucedido (simulação)
-      Alert.alert('Sucesso', 'Login realizado com sucesso!', [
-        {
-          text: 'OK',
-          onPress: () => router.push('/lobby')
-        }
-      ]);
+      Alert.alert('Sucesso', 'Login realizado com sucesso!');
+      router.replace('/lobby');
       setIsLoading(false);
-    }, 1500);
+    }, 2000);
   };
 
   const handleSkipLogin = () => {
     Alert.alert(
-      'Acesso Direto',
-      'Deseja acessar diretamente sem login?',
+      'Pular Login',
+      'Deseja acessar sem fazer login?',
       [
         {
           text: 'Cancelar',
@@ -49,7 +45,9 @@ export default function LoginScreen() {
         },
         {
           text: 'Acessar',
-          onPress: () => router.push('/lobby')
+          onPress: () => {
+            router.replace('/lobby');
+          }
         }
       ]
     );
@@ -57,58 +55,91 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Vendas App</Text>
-        <Text style={styles.subtitle}>Faça login para continuar</Text>
-      </View>
+      {/* ✅ FAIXA PROTETORA: Protege ícones da câmera com cor da marca */}
+      <View style={[
+        styles.statusBarSpacer,
+        { backgroundColor: '#4CAF50' }
+      ]} />
 
-      <View style={styles.formContainer}>
-        <View style={styles.inputContainer}>
-          <Ionicons name="mail-outline" size={20} color="#666" style={styles.inputIcon} />
-          <TextInput
-            style={styles.input}
-            placeholder="E-mail"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.logoContainer}>
+            <Ionicons name="storefront-outline" size={60} color="#4CAF50" />
+            <Text style={styles.appTitle}>Vendas App</Text>
+            <Text style={styles.appSubtitle}>Sistema de Vendas</Text>
+          </View>
         </View>
 
-        <View style={styles.inputContainer}>
-          <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
-          <TextInput
-            style={styles.input}
-            placeholder="Senha"
-            value={senha}
-            onChangeText={setSenha}
-            secureTextEntry
-          />
+        {/* Form Container */}
+        <View style={styles.formContainer}>
+          <Text style={styles.formTitle}>Bem-vindo!</Text>
+          <Text style={styles.formSubtitle}>Faça login para continuar</Text>
+
+          {/* Email Input */}
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>E-mail</Text>
+            <View style={styles.inputWrapper}>
+              <Ionicons name="mail-outline" size={20} color="#666" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                value={email}
+                onChangeText={setEmail}
+                placeholder="seu@email.com"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
+          </View>
+
+          {/* Password Input */}
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Senha</Text>
+            <View style={styles.inputWrapper}>
+              <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                value={senha}
+                onChangeText={setSenha}
+                placeholder="••••••••"
+                secureTextEntry
+              />
+            </View>
+          </View>
+
+          {/* Login Button */}
+          <TouchableOpacity
+            style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
+            onPress={handleLogin}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <Text style={styles.loginButtonText}>Entrando...</Text>
+            ) : (
+              <>
+                <Ionicons name="log-in-outline" size={20} color="white" />
+                <Text style={styles.loginButtonText}>Entrar</Text>
+              </>
+            )}
+          </TouchableOpacity>
+
+          {/* Skip Login */}
+          <TouchableOpacity style={styles.skipButton} onPress={handleSkipLogin}>
+            <Text style={styles.skipButtonText}>Acessar sem login</Text>
+          </TouchableOpacity>
+
+          {/* Footer Info */}
+          <View style={styles.footerContainer}>
+            <Text style={styles.footerText}>
+              Lojas disponíveis: {lojas?.length || 0}
+            </Text>
+            <Text style={styles.footerSubtext}>
+              Sistema de gerenciamento de vendas
+            </Text>
+          </View>
         </View>
-
-        <TouchableOpacity
-          style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
-          onPress={handleLogin}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <Text style={styles.loginButtonText}>Carregando...</Text>
-          ) : (
-            <Text style={styles.loginButtonText}>Entrar</Text>
-          )}
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.skipButton} onPress={handleSkipLogin}>
-          <Text style={styles.skipButtonText}>Acessar sem login</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>
-          {lojas?.length || 0} lojas disponíveis
-        </Text>
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -116,42 +147,68 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
-    justifyContent: 'center',
-    paddingHorizontal: 20
+    backgroundColor: '#F8F9FA'
+  },
+  // ✅ FAIXA PROTETORA: Altura da StatusBar para proteger ícones
+  statusBarSpacer: {
+    height: Platform.OS === 'android' ? StatusBar.currentHeight || 20 : 20,
+    width: '100%'
+  },
+  scrollView: {
+    flex: 1
   },
   header: {
+    padding: 40,
     alignItems: 'center',
-    marginBottom: 40
+    backgroundColor: 'white'
   },
-  title: {
-    fontSize: 32,
+  logoContainer: {
+    alignItems: 'center',
+    gap: 10
+  },
+  appTitle: {
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#4CAF50',
-    marginBottom: 10
+    color: '#333'
   },
-  subtitle: {
+  appSubtitle: {
     fontSize: 16,
-    color: '#666',
-    textAlign: 'center'
+    color: '#666'
   },
   formContainer: {
+    flex: 1,
     backgroundColor: 'white',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
     padding: 30,
-    borderRadius: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2
+    marginTop: -20
+  },
+  formTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 5
+  },
+  formSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 30
   },
   inputContainer: {
+    marginBottom: 20
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8
+  },
+  inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#E0E0E0',
-    borderRadius: 8,
-    marginBottom: 20,
+    borderRadius: 12,
     paddingHorizontal: 15,
     backgroundColor: '#F8F9FA'
   },
@@ -165,11 +222,14 @@ const styles = StyleSheet.create({
     color: '#333'
   },
   loginButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: '#4CAF50',
     paddingVertical: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 15
+    borderRadius: 12,
+    gap: 8,
+    marginBottom: 20
   },
   loginButtonDisabled: {
     backgroundColor: '#CCC'
@@ -188,12 +248,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textDecorationLine: 'underline'
   },
-  footer: {
+  footerContainer: {
     alignItems: 'center',
-    marginTop: 20
+    marginTop: 40,
+    gap: 5
   },
   footerText: {
     fontSize: 12,
     color: '#999'
+  },
+  footerSubtext: {
+    fontSize: 10,
+    color: '#CCC'
   }
 });

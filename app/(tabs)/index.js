@@ -1,6 +1,6 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Dimensions, Alert, Platform, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { Alert, Dimensions, Image, Platform, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useApp } from '../context/AppContext';
 
 export default function AdminDashboard() {
@@ -9,9 +9,6 @@ export default function AdminDashboard() {
   
   const cards = [
     { label: 'Nova Venda', icon: 'cart-outline', color: '#4CAF50', route: '/catalogo', adminOnly: false },
-    { label: 'Estoque', icon: 'list-outline', color: '#2196F3', route: '/estoque', adminOnly: true },
-    { label: 'Clientes', icon: 'people-outline', color: '#FF9800', route: '/clientes', adminOnly: true },
-    { label: 'Relatórios', icon: 'stats-chart-outline', color: '#9C27B0', route: '/relatorios', adminOnly: true },
     { label: 'Configurações', icon: 'settings-outline', color: '#607D8B', route: '/config', adminOnly: true },
     { label: 'Suporte', icon: 'logo-whatsapp', color: '#25D366', action: 'whatsapp', adminOnly: false },
   ];

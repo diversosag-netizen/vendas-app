@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform, Alert, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter, usePathname } from 'expo-router';
+import { usePathname, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Alert, Platform, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useApp } from '../../context/AppContext';
 
 export default function CustomTabBar({ state, descriptors, navigation }) {
@@ -26,8 +26,8 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
       router.push('/catalogo'); // Rota catalogo -> Catálogo
     } else if (routeName === 'vendas') {
       router.push('/vendas'); // ✅ CORRIGIDO: Rota vendas -> Vendas (arquivo existente)
-    } else if (routeName === 'config') {
-      router.push('/config'); // ✅ CORRIGIDO: Rota config -> Configurações (arquivo existente)
+    } else if (routeName === 'config/index') {
+      router.push('/config'); // ✅ CORRIGIDO: Rota config/index -> Configurações (arquivo existente)
     }
   };
 

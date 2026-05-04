@@ -11,8 +11,8 @@ export default function TabLayout() {
     >
       <Tabs.Screen name="index" options={{ title: 'Início' }} />
       <Tabs.Screen name="catalogo" options={{ title: 'Catálogo' }} />
-      <Tabs.Screen name="cart" options={{ title: 'Carrinho' }} />
-      <Tabs.Screen name="profile" options={{ title: 'Perfil' }} />
+      <Tabs.Screen name="vendas" options={{ title: 'Vendas' }} />
+      <Tabs.Screen name="config/index" options={{ title: 'Config' }} />
     </Tabs>
   );
 }
