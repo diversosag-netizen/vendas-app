@@ -14,10 +14,15 @@ export const AppProvider = ({ children }) => {
   const [produtos, setProdutos] = useState([]);
   const [produtoSelecionado, setProdutoSelecionado] = useState(null);
 
+  // 🔐 VENDAS 3.0: Sistema de Autenticação
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userRole, setUserRole] = useState(null); // 'admin' | 'cliente'
+  const [currentUser, setCurrentUser] = useState(null);
+
   const lojas = [
-    { id: '1', nome: 'Maranata Serviços Técnicos', cor: '#4CAF50' },
-    { id: '2', nome: 'TechStore', cor: '#2196F3' },
-    { id: '3', nome: 'Gadget Shop', cor: '#FF9800' }
+    { id: '1', nome: 'Maranata Serviços Técnicos', cor: '#4CAF50', requerSenha: true },
+    { id: '2', nome: 'TechStore', cor: '#2196F3', requerSenha: true },
+    { id: '3', nome: 'Gadget Shop', cor: '#FF9800', requerSenha: false } // Cliente sem senha
   ];
 
   // Função para trocar de loja
@@ -40,6 +45,37 @@ export const AppProvider = ({ children }) => {
     setClientes([]);
     setProdutos([]);
     setProdutoSelecionado(null);
+    // 🔐 VENDAS 3.0: Limpar autenticação
+    setIsAuthenticated(false);
+    setUserRole(null);
+    setCurrentUser(null);
+  };
+
+  // 🔐 VENDAS 3.0: Função de login
+  const login = (email, senha) => {
+    // Mock users para protótipo
+    const mockUsers = [
+      { id: 1, email: 'admin@vendas.com', role: 'admin', senha: 'admin123', nome: 'Administrador' },
+      { id: 2, email: 'cliente@loja.com', role: 'cliente', senha: 'cliente123', nome: 'Cliente', id_loja: '1' },
+      { id: 3, email: 'tech@store.com', role: 'cliente', senha: 'tech123', nome: 'Tech Cliente', id_loja: '2' }
+    ];
+
+    const user = mockUsers.find(u => u.email === email && u.senha === senha);
+    
+    if (user) {
+      setIsAuthenticated(true);
+      setUserRole(user.role);
+      setCurrentUser(user);
+      
+      // Se for cliente, fixar na loja dele
+      if (user.role === 'cliente' && user.id_loja) {
+        setLojaAtiva(user.id_loja);
+      }
+      
+      return true;
+    }
+    
+    return false;
   };
 
   // Função para adicionar venda
@@ -87,7 +123,10 @@ export const AppProvider = ({ children }) => {
   };
 
   // 2. OBJETO DE FALLBACK GARANTIDO para evitar undefined properties
-  const lojaAtualSegura = lojas.find(loja => loja.id === lojaAtiva) || lojas[0];
+  const lojaAtualSegura = lojas.find(loja => loja.id === lojaAtiva) || lojas.find(loja => loja.id === lojaAtiva) || lojas[0];
+
+  // 3. DEBUG: Log para verificar qual loja está sendo usada
+  console.log(`DEBUG: lojaAtiva = ${lojaAtiva}, lojaAtualSegura = ${lojaAtualSegura?.nome}`);
 
   return (
     <AppContext.Provider value={{ 
@@ -102,7 +141,15 @@ export const AppProvider = ({ children }) => {
       produtoSelecionado,
       trocarLoja,
       togglePerfil,
-      logout, // ✅ ADICIONADA: Função de logout
+      logout, 
+      login, // 🔐 VENDAS 3.0: Função de login
+      // 🔐 VENDAS 3.0: Variáveis de autenticação
+      isAuthenticated,
+      userRole,
+      currentUser,
+      setIsAuthenticated,
+      setUserRole,
+      setCurrentUser,
       adicionarVenda,
       adicionarAoEstoque,
       adicionarCliente,

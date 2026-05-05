@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert, Platform, StatusBar, Image, Dimensions } from 'react-native';
-import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useApp } from '../context/AppContext';
 import Header from './components/Header';
 
@@ -82,10 +82,6 @@ export default function VendasScreen() {
     selecionarProduto(null);
   };
 
-  const handleVoltar = () => {
-    router.push('/catalogo');
-  };
-
   // ✅ FUNÇÕES DO CART
   const handleRemoverItem = (vendaId) => {
     Alert.alert(
@@ -134,7 +130,7 @@ export default function VendasScreen() {
   };
 
   const totalVendas = vendasSeguras.reduce((acc, venda) => acc + (venda.valor || 0), 0);
-  const vendasHoje = vendasSeguras.filter(venda => venda.data === new Date().toLocaleDateString());
+  const vendasHoje = vendasSeguras.filter(venda => venda?.data === new Date().toLocaleDateString());
 
   const renderCartItem = (item, index) => (
     <View key={item.id || index} style={styles.cartItem}>
@@ -160,8 +156,7 @@ export default function VendasScreen() {
       <Header 
         title="Vendas"
         subtitle={nomeLoja}
-        showBackButton={true}
-        onBackPress={handleVoltar}
+        showBackButton={false}
         backgroundColor={corLoja}
       />
 
@@ -379,6 +374,18 @@ export default function VendasScreen() {
           )}
         </>
       )}
+      
+      {/* ✅ BOTÃO VOLTAR - Parte inferior direita */}
+      <View style={styles.backButtonContainer}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.push('/')}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="arrow-back-outline" size={14} color="white" />
+          <Text style={styles.backButtonText}>Voltar</Text>
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 }
@@ -713,6 +720,32 @@ const styles = StyleSheet.create({
   continueShoppingButtonText: {
     color: '#666',
     fontSize: 16,
+    fontWeight: '600'
+  },
+  // ✅ ESTILOS DO BOTÃO VOLTAR
+  backButtonContainer: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    zIndex: 1000
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 25,
+    gap: 8,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4
+  },
+  backButtonText: {
+    color: 'white',
+    fontSize: 14,
     fontWeight: '600'
   }
 });

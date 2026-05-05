@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, FlatList, Platform, StatusBar, TextInput, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import { Alert, Dimensions, FlatList, Image, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useApp } from '../context/AppContext';
 import Header from './components/Header';
 
 export default function CatalogoScreen() {
   const router = useRouter();
   const { produtos, selecionarProduto, lojaAtual, bannerLojaAtual, adicionarProduto, removerProduto } = useApp();
-  const [isMobile, setIsMobile] = useState(Platform.OS !== 'web');
+  const [isMobile] = useState(Platform.OS !== 'web');
   const [abaAtiva, setAbaAtiva] = useState('catalogo'); // 'catalogo' ou 'estoque'
   const [mostrarFormEstoque, setMostrarFormEstoque] = useState(false);
   
@@ -162,6 +162,7 @@ export default function CatalogoScreen() {
   );
 
   return (
+    <>
     <ScrollView style={styles.container}>
       {/* ✅ CABEÇALHO DINÂMICO: Componente único com props */}
       <Header 
@@ -229,15 +230,6 @@ export default function CatalogoScreen() {
               <Text style={styles.emptyStateSubtitle}>
                 Adicione produtos ao estoque para começar a vender
               </Text>
-              <TouchableOpacity
-                style={styles.emptyStateButton}
-                onPress={() => setAbaAtiva('estoque')}
-              >
-                <Ionicons name="arrow-forward-outline" size={20} color="white" />
-                <Text style={styles.emptyStateButtonText}>
-                  Ir para Estoque
-                </Text>
-              </TouchableOpacity>
             </View>
           )}
         </>
@@ -373,6 +365,19 @@ export default function CatalogoScreen() {
         </>
       )}
     </ScrollView>
+    
+    {/* ✅ BOTÃO VOLTAR - Parte inferior direita */}
+    <View style={styles.backButtonContainer}>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => router.push('/')}
+        activeOpacity={0.8}
+      >
+        <Ionicons name="arrow-back-outline" size={14} color="white" />
+        <Text style={styles.backButtonText}>Voltar</Text>
+      </TouchableOpacity>
+    </View>
+    </>
   );
 }
 
@@ -635,5 +640,38 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 12,
     fontWeight: '600'
+  },
+  // ✅ ESTILOS DO BOTÃO VOLTAR
+  backButtonContainer: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    zIndex: 1000
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 25,
+    gap: 8,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4
+  },
+  backButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600'
+  },
+  // ✅ ESTILOS DO BOTÃO VOLTAR
+  backButtonContainer: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    zIndex: 1000
   }
 });

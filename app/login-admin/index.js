@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { Alert, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useApp } from '../context/AppContext';
 
-export default function LoginScreen() {
+export default function LoginAdminScreen() {
   const router = useRouter();
-  const { lojas, login, userRole } = useApp();
+  const { login } = useApp();
   
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
@@ -20,24 +20,19 @@ export default function LoginScreen() {
 
     setIsLoading(true);
     
-    // 🔐 VENDAS 3.0: Login real com autenticação (função síncrona)
+    // 🔐 VENDAS 3.0: Login específico para administradores
     try {
       const sucesso = login(email, senha);
       
       if (sucesso) {
-        Alert.alert('Sucesso', 'Login realizado com sucesso!');
+        Alert.alert('Sucesso', 'Acesso administrativo liberado!');
         
         // Pequeno delay para garantir atualização do estado
         setTimeout(() => {
-          // Redirecionamento baseado no role (padronizado Web/Android)
-          if (userRole === 'admin') {
-            router.replace('/lobby'); // Admin escolhe loja
-          } else {
-            router.replace('/(tabs)'); // Cliente vai direto para loja
-          }
+          router.replace('/(tabs)/config');
         }, 100);
       } else {
-        Alert.alert('Erro', 'E-mail ou senha incorretos!');
+        Alert.alert('Erro', 'Credenciais administrativas incorretas!');
       }
     } catch (error) {
       Alert.alert('Erro', 'Falha no login. Tente novamente.');
@@ -46,23 +41,8 @@ export default function LoginScreen() {
     }
   };
 
-  const handleSkipLogin = () => {
-    Alert.alert(
-      'Pular Login',
-      'Deseja acessar sem fazer login?',
-      [
-        {
-          text: 'Cancelar',
-          style: 'cancel'
-        },
-        {
-          text: 'Acessar',
-          onPress: () => {
-            router.replace('/lobby');
-          }
-        }
-      ]
-    );
+  const handleBack = () => {
+    router.back();
   };
 
   return (
@@ -70,34 +50,34 @@ export default function LoginScreen() {
       {/* ✅ FAIXA PROTETORA: Protege ícones da câmera com cor da marca */}
       <View style={[
         styles.statusBarSpacer,
-        { backgroundColor: '#4CAF50' }
+        { backgroundColor: '#607D8B' }
       ]} />
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.logoContainer}>
-            <Ionicons name="storefront-outline" size={60} color="#4CAF50" />
-            <Text style={styles.appTitle}>Vendas App</Text>
-            <Text style={styles.appSubtitle}>Sistema de Vendas</Text>
+            <Ionicons name="shield-checkmark-outline" size={60} color="#607D8B" />
+            <Text style={styles.appTitle}>Acesso Administrativo</Text>
+            <Text style={styles.appSubtitle}>Vendas App - Área Restrita</Text>
           </View>
         </View>
 
         {/* Form Container */}
         <View style={styles.formContainer}>
-          <Text style={styles.formTitle}>Bem-vindo!</Text>
-          <Text style={styles.formSubtitle}>Faça login para continuar</Text>
+          <Text style={styles.formTitle}>Login Administrador</Text>
+          <Text style={styles.formSubtitle}>Acesso apenas para lojistas</Text>
 
           {/* Email Input */}
           <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>E-mail</Text>
+            <Text style={styles.inputLabel}>E-mail Administrativo</Text>
             <View style={styles.inputWrapper}>
               <Ionicons name="mail-outline" size={20} color="#666" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 value={email}
                 onChangeText={setEmail}
-                placeholder="seu@email.com"
+                placeholder="admin@sualoja.com"
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -107,7 +87,7 @@ export default function LoginScreen() {
 
           {/* Password Input */}
           <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Senha</Text>
+            <Text style={styles.inputLabel}>Senha Administrativa</Text>
             <View style={styles.inputWrapper}>
               <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
               <TextInput
@@ -127,30 +107,28 @@ export default function LoginScreen() {
             disabled={isLoading}
           >
             {isLoading ? (
-              <Text style={styles.loginButtonText}>Entrando...</Text>
+              <Text style={styles.loginButtonText}>Autenticando...</Text>
             ) : (
               <>
-                <Ionicons name="log-in-outline" size={20} color="white" />
-                <Text style={styles.loginButtonText}>Entrar</Text>
+                <Ionicons name="shield-checkmark-outline" size={20} color="white" />
+                <Text style={styles.loginButtonText}>Acessar Painel</Text>
               </>
             )}
           </TouchableOpacity>
 
-          {/* Skip Login */}
-          <TouchableOpacity style={styles.skipButton} onPress={handleSkipLogin}>
-            <Text style={styles.skipButtonText}>Acessar sem login</Text>
+          {/* Back Button */}
+          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+            <Ionicons name="arrow-back-outline" size={20} color="#607D8B" />
+            <Text style={styles.backButtonText}>Voltar</Text>
           </TouchableOpacity>
 
-        {/* Footer Info - Dados de Teste Vendas 3.0 */}
+          {/* Footer Info - Dados de Teste */}
           <View style={styles.footerContainer}>
             <Text style={styles.footerText}>
-              📱 Dados de Teste:
+              📱 Dados de Teste Admin:
             </Text>
             <Text style={styles.footerSubtext}>
-              Admin: admin@vendas.com / admin123
-            </Text>
-            <Text style={styles.footerSubtext}>
-              Cliente: cliente@loja.com / cliente123
+              admin@vendas.com / admin123
             </Text>
           </View>
         </View>
@@ -240,7 +218,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#607D8B',
     paddingVertical: 15,
     borderRadius: 12,
     gap: 8,
@@ -254,14 +232,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold'
   },
-  skipButton: {
+  backButton: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10
+    justifyContent: 'center',
+    paddingVertical: 10,
+    gap: 8
   },
-  skipButtonText: {
-    color: '#666',
+  backButtonText: {
+    color: '#607D8B',
     fontSize: 14,
-    textDecorationLine: 'underline'
+    fontWeight: '600'
   },
   footerContainer: {
     alignItems: 'center',

@@ -1,13 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Dimensions, Image, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useApp } from '../context/AppContext';
-import { Platform } from 'react-native';
 
 export default function LobbyScreen() {
   const router = useRouter();
-  const { lojas, trocarLoja, bannerLojaAtual } = useApp();
+  const { lojas, trocarLoja, setLojaAtiva } = useApp();
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -16,25 +15,23 @@ export default function LobbyScreen() {
 
   const screenWidth = Dimensions.get('window').width;
 
+  // ✅ FUNÇÃO DE SELEÇÃO - Solução Segura para Identidade Visual
+  const selecionarLoja = (loja) => {
+    console.log(`Clicou na loja: ${loja.nome} (ID: ${loja.id})`);
+    
+    // Definir a loja ativa corretamente
+    setLojaAtiva(loja.id);
+    
+    // Log para debug
+    console.log(`Loja ativa definida para: ${loja.id}`);
+    
+    // Navegação: router.replace para Web (sem reload) e Android
+    router.replace('/(tabs)');
+  };
+
   const handleSelectStore = (loja) => {
-    Alert.alert(
-      `Entrar na ${loja.nome}`,
-      `Deseja acessar a loja ${loja.nome}?`,
-      [
-        {
-          text: 'Cancelar',
-          style: 'cancel'
-        },
-        {
-          text: 'Entrar',
-          onPress: () => {
-            console.log(`Entrando na loja: ${loja.id}`);
-            trocarLoja(loja.id);
-            router.push('/(tabs)');
-          }
-        }
-      ]
-    );
+    // Fluxo unificado: chamar selecionarLoja que cuida da senha
+    selecionarLoja(loja);
   };
 
   const renderStoreCard = (loja) => {
@@ -52,7 +49,11 @@ export default function LobbyScreen() {
             backgroundColor: loja.cor,
             borderColor: loja.cor
           },
-          isMobile && styles.storeCardMobile
+          isMobile && styles.storeCardMobile,
+          Platform.OS === 'web' && {
+            zIndex: 10,
+            cursor: 'pointer'
+          }
         ]}
         onPress={() => handleSelectStore(loja)}
         activeOpacity={0.8}

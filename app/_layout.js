@@ -1,5 +1,5 @@
 import { Stack } from 'expo-router';
-import { StyleSheet, View, StatusBar } from 'react-native';
+import { StatusBar, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppProvider } from './context/AppContext';
 

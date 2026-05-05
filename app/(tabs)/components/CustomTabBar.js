@@ -7,7 +7,7 @@ import { useApp } from '../../context/AppContext';
 export default function CustomTabBar({ state, descriptors, navigation }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { lojaAtual, trocarLoja } = useApp();
+  const { lojaAtual } = useApp();
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
