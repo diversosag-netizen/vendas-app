@@ -5,7 +5,7 @@ import { useApp } from '../context/AppContext';
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const { perfil, vendas, lojaAtual, lojas, bannerLojaAtual, produtos, userRole, isAuthenticated, setLojaAtiva } = useApp();
+  const { perfil, vendas, lojaAtual, lojas, bannerLojaAtual, produtos, userRole, isAuthenticated, setLojaAtiva, logout } = useApp();
   
   // Versão simplificada para testar no mobile
   const produtosSeguros = produtos || [];
@@ -24,10 +24,18 @@ export default function AdminDashboard() {
     }
   };
 
-  // 🏪 VENDAS 3.0: Botão para voltar ao lobby (escolher outra loja)
+  // 🏪 VENDAS 3.2: Botão para voltar ao lobby (escolher outra loja)
   const handleBackToLobby = () => {
     // Resetar loja ativa para padrão
     setLojaAtiva('1');
+    // Voltar para lobby
+    router.replace('/lobby');
+  };
+
+  // 🔐 VENDAS 3.2: Fluxo de saída administrativa
+  const handleAdminLogout = () => {
+    // Limpar estado de admin
+    logout();
     // Voltar para lobby
     router.replace('/lobby');
   };
@@ -40,6 +48,13 @@ export default function AdminDashboard() {
       icon: 'storefront-outline',
       color: '#FF9800',
       route: '/catalogo'
+    },
+    {
+      id: 'promocoes',
+      title: 'Promoções',
+      icon: 'flash-outline',
+      color: '#FF9800',
+      route: '/promocoes'
     },
     {
       id: 'vendas',
@@ -97,7 +112,7 @@ export default function AdminDashboard() {
           <Text style={styles.headerSubtitle}>Dashboard</Text>
         </View>
 
-        {/* Cards Simples */}
+        {/* Cards Simples - Vitrine Aberta */}
         <View style={styles.cardsContainer}>
           <Text style={styles.sectionTitle}>Menu Rápido</Text>
           <View style={styles.cardsGrid}>
@@ -105,20 +120,37 @@ export default function AdminDashboard() {
           </View>
         </View>
 
-        {/* Estatísticas */}
-        <View style={styles.statsContainer}>
-          <Text style={styles.sectionTitle}>Estatísticas</Text>
-          <View style={styles.statsGrid}>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>R$ {totalVendas.toFixed(2)}</Text>
-              <Text style={styles.statLabel}>Vendas Totais</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{produtosSeguros.length}</Text>
-              <Text style={styles.statLabel}>Produtos</Text>
+        {/* 🔐 VENDAS 3.2: Estatísticas - Apenas para Admins */}
+        {userRole === 'admin' && (
+          <View style={styles.statsContainer}>
+            <Text style={styles.sectionTitle}>Estatísticas</Text>
+            <View style={styles.statsGrid}>
+              <View style={styles.statCard}>
+                <Text style={styles.statValue}>R$ {totalVendas.toFixed(2)}</Text>
+                <Text style={styles.statLabel}>Vendas Totais</Text>
+              </View>
+              <View style={styles.statCard}>
+                <Text style={styles.statValue}>{produtosSeguros.length}</Text>
+                <Text style={styles.statLabel}>Produtos</Text>
+              </View>
             </View>
           </View>
-        </View>
+        )}
+
+        {/* 🛒 VENDAS 3.2: Indicador para Clientes */}
+        {userRole !== 'admin' && (
+          <View style={styles.customerInfoContainer}>
+            <Text style={styles.sectionTitle}>Bem-vindo à Loja</Text>
+            <View style={styles.customerInfoCard}>
+              <Ionicons name="home-outline" size={40} color="#4CAF50" />
+              <Text style={styles.customerInfoTitle}>Modo Visitante</Text>
+              <Text style={styles.customerInfoSubtitle}>
+                Navegue pelo catálogo e faça suas compras. Para acessar as ferramentas de gestão, 
+                clique em "Config" e faça login como administrador.
+              </Text>
+            </View>
+          </View>
+        )}
       </View>
 
       {/* 🏪 Botão Flutuante para Voltar ao Lobby */}
@@ -170,16 +202,19 @@ const styles = StyleSheet.create({
     marginBottom: 15
   },
   cardsGrid: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     gap: 15
   },
   cardSimples: {
-    flex: 1,
+    height: 80,
+    width: '100%',
     backgroundColor: '#4CAF50',
-    padding: 20,
-    borderRadius: 12,
+    borderRadius: 15,
     alignItems: 'center',
-    gap: 10
+    justifyContent: 'center',
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    gap: 15
   },
   cardSimplesText: {
     color: 'white',
@@ -231,6 +266,33 @@ const styles = StyleSheet.create({
   backToLobbyButtonText: {
     color: 'white',
     fontSize: 14,
-    fontWeight: 'bold'
+    fontWeight: '600'
+  },
+  customerInfoContainer: {
+    padding: 20
+  },
+  customerInfoCard: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 20,
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4
+  },
+  customerInfoTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginTop: 12,
+    marginBottom: 8
+  },
+  customerInfoSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 20
   }
 });

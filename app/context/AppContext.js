@@ -5,7 +5,7 @@ const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
   // 1. REFACTORAR: Valores padrão não-nulos para evitar Type Errors
-  const [lojaAtiva, setLojaAtiva] = useState('1'); // ID padrão em vez de null
+  const [lojaAtiva, setLojaAtiva] = useState(null); // Forçar lobby ao abrir o app
   const [saldo, setSaldo] = useState(0);
   
   // Arrays inicializados para nunca serem undefined
@@ -15,10 +15,17 @@ export const AppProvider = ({ children }) => {
   const [produtos, setProdutos] = useState([]);
   const [produtoSelecionado, setProdutoSelecionado] = useState(null);
 
-  // 🔐 VENDAS 3.0: Sistema de Autenticação
+  // � VENDAS 3.1: Sistema de Carrinho de Compras
+  const [carrinho, setCarrinho] = useState([]);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+
+  // 🔐 VENDAS 3.2: Sistema de Autenticação com Sincronização de Dados
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState(null); // 'admin' | 'cliente'
   const [currentUser, setCurrentUser] = useState(null);
+
+  // 📊 VENDAS 3.2: Variáveis de faturamento e estoque sincronizadas
+  const [dadosCarregados, setDadosCarregados] = useState(false);
 
   const lojas = [
     { id: '1', nome: 'Maranata Serviços Técnicos', cor: '#4CAF50', requerSenha: true },
@@ -123,8 +130,66 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  // 2. OBJETO DE FALLBACK GARANTIDO para evitar undefined properties
-  const lojaAtualSegura = lojas.find(loja => loja.id === lojaAtiva) || lojas.find(loja => loja.id === lojaAtiva) || lojas[0];
+  // 🛒 VENDAS 3.1: Funções do Carrinho de Compras
+  const adicionarAoCarrinho = (produto, quantidade = 1) => {
+    const itemExistente = carrinho.find(item => item.id === produto.id);
+    
+    if (itemExistente) {
+      // Se item já existe, aumenta quantidade
+      setCarrinho(carrinho.map(item => 
+        item.id === produto.id 
+          ? { ...item, quantidade: item.quantidade + quantidade }
+          : item
+      ));
+    } else {
+      // Se item não existe, adiciona ao carrinho
+      setCarrinho([...carrinho, { 
+        ...produto, 
+        quantidade,
+        subtotal: produto.preco_medio * quantidade
+      }]);
+    }
+  };
+
+  const removerDoCarrinho = (produtoId) => {
+    setCarrinho(carrinho.filter(item => item.id !== produtoId));
+  };
+
+  const atualizarQuantidadeCarrinho = (produtoId, novaQuantidade) => {
+    if (novaQuantidade <= 0) {
+      removerDoCarrinho(produtoId);
+      return;
+    }
+    
+    setCarrinho(carrinho.map(item => 
+      item.id === produtoId 
+        ? { ...item, quantidade: novaQuantidade, subtotal: item.preco_medio * novaQuantidade }
+        : item
+    ));
+  };
+
+  const limparCarrinho = () => {
+    setCarrinho([]);
+  };
+
+  const getTotalCarrinho = () => {
+    return carrinho.reduce((total, item) => total + (item.subtotal || 0), 0);
+  };
+
+  const abrirCheckout = () => {
+    if (carrinho.length === 0) {
+      return false; // Não abrir checkout com carrinho vazio
+    }
+    setIsCheckoutOpen(true);
+    return true;
+  };
+
+  const fecharCheckout = () => {
+    setIsCheckoutOpen(false);
+  };
+
+  // 2. OBJETO DE FALLBACK - Retorna null se nenhuma loja ativa para forçar lobby
+  const lojaAtualSegura = lojas.find(loja => loja.id === lojaAtiva) || null;
 
   // 3. DEBUG: Log para verificar qual loja está sendo usada
   console.log(`DEBUG: lojaAtiva = ${lojaAtiva}, lojaAtualSegura = ${lojaAtualSegura?.nome}`);
@@ -157,6 +222,21 @@ export const AppProvider = ({ children }) => {
       adicionarProduto,
       selecionarProduto,
       atualizarBannerLoja, // ✅ ADICIONADA: Função para atualizar banner
+      // 🛒 VENDAS 3.1: Sistema de Carrinho
+      carrinho,
+      setCarrinho,
+      adicionarAoCarrinho,
+      removerDoCarrinho,
+      atualizarQuantidadeCarrinho,
+      limparCarrinho,
+      getTotalCarrinho,
+      abrirCheckout,
+      fecharCheckout,
+      isCheckoutOpen,
+      setIsCheckoutOpen,
+      // 📊 VENDAS 3.2: Sincronização de dados administrativos
+      dadosCarregados,
+      setDadosCarregados,
       // Dados da loja atual com fallback garantido
       lojaAtual: lojaAtualSegura,
       bannerLojaAtual: lojaAtualSegura?.bannerImage || null
