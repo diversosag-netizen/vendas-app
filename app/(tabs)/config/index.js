@@ -244,6 +244,21 @@ export default function ConfigScreen() {
                 </View>
               </TouchableOpacity>
 
+              {/* 🎨 Card Identidade Visual - NOVO */}
+              <TouchableOpacity
+                style={styles.quickActionCard}
+                onPress={() => router.push('/(tabs)/config/identidade-visual')}
+                activeOpacity={0.8}
+              >
+                <View style={[styles.quickActionIcon, { backgroundColor: '#9C27B0' }]}>
+                  <Ionicons name="palette-outline" size={20} color="white" />
+                </View>
+                <View style={styles.quickActionContent}>
+                  <Text style={styles.quickActionTitle}>Identidade Visual</Text>
+                  <Text style={styles.quickActionSubtitle}>Personalizar tema</Text>
+                </View>
+              </TouchableOpacity>
+
               {/* Card Perfil */}
               <TouchableOpacity
                 style={styles.quickActionCard}
