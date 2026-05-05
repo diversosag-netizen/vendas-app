@@ -2,20 +2,20 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-  Alert,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  Switch
+    Alert,
+    ScrollView,
+    StyleSheet,
+    Switch,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { useApp } from '../../context/AppContext';
 import Header from '../components/Header';
 
 export default function IdentidadeVisualScreen() {
   const router = useRouter();
-  const { lojaAtual, temaAtual } = useApp();
+  const { lojaAtual, temaAtual, salvarTemaFirebase, inicializarLojaFirebase } = useApp();
   
   // 🎨 Temas pré-definidos
   const temasPredefinidos = {
@@ -55,7 +55,7 @@ export default function IdentidadeVisualScreen() {
   const [gradEnabled, setGradEnabled] = useState(true);
 
   // Função para salvar tema
-  const salvarTema = () => {
+  const salvarTema = async () => {
     Alert.alert(
       'Salvar Tema',
       `Deseja aplicar o tema "${temasPredefinidos[temaSelecionado].nome}" à sua loja?`,
@@ -66,10 +66,21 @@ export default function IdentidadeVisualScreen() {
         },
         {
           text: 'Aplicar',
-          onPress: () => {
-            // TODO: Implementar salvamento real
-            Alert.alert('Sucesso', 'Tema aplicado com sucesso!');
-            router.back();
+          onPress: async () => {
+            try {
+              // 🔥 Salvar no Firebase
+              const sucesso = await salvarTemaFirebase(lojaAtual?.id || '1', temaSelecionado);
+              
+              if (sucesso) {
+                Alert.alert('Sucesso', 'Tema aplicado com sucesso! As alterações serão salvas permanentemente.');
+                router.back();
+              } else {
+                Alert.alert('Erro', 'Não foi possível salvar o tema. Tente novamente.');
+              }
+            } catch (error) {
+              console.error('Erro ao salvar tema:', error);
+              Alert.alert('Erro', 'Ocorreu um erro ao salvar o tema.');
+            }
           }
         }
       ]

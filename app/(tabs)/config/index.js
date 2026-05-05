@@ -21,7 +21,7 @@ const bannerHeight = 150;
 
 export default function ConfigScreen() {
   const router = useRouter();
-  const { lojaAtual, atualizarBannerLoja, logout, setLojaAtiva, userRole, isAuthenticated } = useApp();
+  const { lojaAtual, atualizarBannerLoja, logout, setLojaAtiva, userRole, isAuthenticated, salvarProdutoFirebase } = useApp();
   
   // Estados para o banner
   const [bannerUrl, setBannerUrl] = useState(lojaAtual?.banner || '');

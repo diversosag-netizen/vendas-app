@@ -1,4 +1,5 @@
 // Version 3.1 - Refactor
+import { collection, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from 'firebase/firestore';
 import { createContext, useContext, useState } from 'react';
 
 const AppContext = createContext();
@@ -70,9 +71,33 @@ export const AppProvider = ({ children }) => {
   ];
 
   // Função para trocar de loja
-  const trocarLoja = (lojaId) => {
+  const trocarLoja = async (lojaId) => {
     setLojaAtiva(lojaId);
     setProdutoSelecionado(null);
+    
+    // 🔥 VENDAS 3.4: Carregar tema salvo no Firebase
+    try {
+      const temaSalvo = await carregarTemaFirebase(lojaId);
+      console.log(`🎨 Tema carregado do Firebase: ${temaSalvo}`);
+      // TODO: Aplicar tema dinamicamente
+    } catch (error) {
+      console.error('❌ Erro ao carregar tema:', error);
+    }
+
+    // 🔥 VENDAS 3.4: Carregar banner salvo no Firebase
+    try {
+      const bannerSalvo = await carregarBannerFirebase(lojaId);
+      console.log(`🖼️ Banner carregado do Firebase: ${bannerSalvo}`);
+      
+      // Atualizar estado local do banner
+      const lojaIndex = lojas.findIndex(loja => loja.id === lojaId);
+      if (lojaIndex !== -1 && bannerSalvo) {
+        lojas[lojaIndex].bannerImage = bannerSalvo;
+        setLojaAtiva(lojaId);
+      }
+    } catch (error) {
+      console.error('❌ Erro ao carregar banner:', error);
+    }
   };
 
   // Função para alternar perfil
@@ -150,13 +175,16 @@ export const AppProvider = ({ children }) => {
   // ✅ IMPLEMENTAR: Função para atualizar banner da loja
   const atualizarBannerLoja = async (bannerUrl) => {
     try {
-      // Encontrar a loja ativa no array
-      const lojaIndex = lojas.findIndex(loja => loja.id === lojaAtiva);
-      if (lojaIndex !== -1) {
-        // Atualizar a propriedade bannerImage
-        lojas[lojaIndex].bannerImage = bannerUrl;
-        // Forçar re-renderização do contexto
-        setLojaAtiva(lojaAtiva);
+      // 🔥 VENDAS 3.4: Salvar no Firebase em vez de apenas local
+      const sucesso = await salvarBannerFirebase(lojaAtiva, bannerUrl);
+      
+      if (sucesso) {
+        // Atualizar localmente também para imediatez
+        const lojaIndex = lojas.findIndex(loja => loja.id === lojaAtiva);
+        if (lojaIndex !== -1) {
+          lojas[lojaIndex].bannerImage = bannerUrl;
+          setLojaAtiva(lojaAtiva);
+        }
         return true;
       }
       return false;
@@ -236,6 +264,128 @@ export const AppProvider = ({ children }) => {
     text: '#1B5E20'
   };
 
+  // 🔥 VENDAS 3.4: Funções Firebase para persistência de temas
+  const salvarTemaFirebase = async (lojaId, temaId) => {
+    try {
+      const lojaRef = doc(db, 'lojas', lojaId);
+      await updateDoc(lojaRef, {
+        temaSelecionado: temaId,
+        dataAtualizacao: new Date().toISOString()
+      });
+      console.log(`✅ Tema ${temaId} salvo para loja ${lojaId}`);
+      return true;
+    } catch (error) {
+      console.error('❌ Erro ao salvar tema:', error);
+      return false;
+    }
+  };
+
+  const carregarTemaFirebase = async (lojaId) => {
+    try {
+      const lojaRef = doc(db, 'lojas', lojaId);
+      const lojaDoc = await getDoc(lojaRef);
+      
+      if (lojaDoc.exists()) {
+        const dados = lojaDoc.data();
+        return dados.temaSelecionado || 'forest';
+      }
+      return 'forest'; // Padrão
+    } catch (error) {
+      console.error('❌ Erro ao carregar tema:', error);
+      return 'forest'; // Padrão
+    }
+  };
+
+  const inicializarLojaFirebase = async (lojaId) => {
+    try {
+      const lojaRef = doc(db, 'lojas', lojaId);
+      const lojaDoc = await getDoc(lojaRef);
+      
+      if (!lojaDoc.exists()) {
+        // Criar documento da loja se não existir
+        await setDoc(lojaRef, {
+          id: lojaId,
+          nome: lojas.find(l => l.id === lojaId)?.nome || 'Loja',
+          temaSelecionado: 'forest',
+          dataCriacao: new Date().toISOString(),
+          dataAtualizacao: new Date().toISOString()
+        });
+        console.log(`📝 Loja ${lojaId} criada no Firebase`);
+      }
+    } catch (error) {
+      console.error('❌ Erro ao inicializar loja:', error);
+    }
+  };
+
+  // 🔥 VENDAS 3.4: Funções Firebase para produtos
+  const salvarProdutoFirebase = async (lojaId, produto) => {
+    try {
+      const produtosRef = doc(db, 'produtos', produto.id);
+      await setDoc(produtosRef, {
+        ...produto,
+        idLoja: lojaId,
+        dataCriacao: new Date().toISOString(),
+        dataAtualizacao: new Date().toISOString()
+      });
+      console.log(`📦 Produto ${produto.nome} salvo no Firebase`);
+      return true;
+    } catch (error) {
+      console.error('❌ Erro ao salvar produto:', error);
+      return false;
+    }
+  };
+
+  const carregarProdutosFirebase = async (lojaId) => {
+    try {
+      const produtosRef = collection(db, 'produtos');
+      const q = query(produtosRef, where('idLoja', '==', lojaId));
+      const querySnapshot = await getDocs(q);
+      
+      const produtos = [];
+      querySnapshot.forEach((doc) => {
+        produtos.push(doc.data());
+      });
+      
+      console.log(`📦 ${produtos.length} produtos carregados do Firebase`);
+      return produtos;
+    } catch (error) {
+      console.error('❌ Erro ao carregar produtos:', error);
+      return [];
+    }
+  };
+
+  // 🔥 VENDAS 3.4: Funções Firebase para banners
+  const salvarBannerFirebase = async (lojaId, bannerUrl) => {
+    try {
+      const lojaRef = doc(db, 'lojas', lojaId);
+      await updateDoc(lojaRef, {
+        bannerUrl: bannerUrl,
+        dataAtualizacao: new Date().toISOString()
+      });
+      console.log(`🖼️ Banner salvo para loja ${lojaId}: ${bannerUrl}`);
+      return true;
+    } catch (error) {
+      console.error('❌ Erro ao salvar banner:', error);
+      return false;
+    }
+  };
+
+  const carregarBannerFirebase = async (lojaId) => {
+    try {
+      const lojaRef = doc(db, 'lojas', lojaId);
+      const lojaDoc = await getDoc(lojaRef);
+      
+      if (lojaDoc.exists()) {
+        const dados = lojaDoc.data();
+        return dados.bannerUrl || '';
+      }
+      return '';
+    } catch (error) {
+      console.error('❌ Erro ao carregar banner:', error);
+      return '';
+    }
+  };
+
   // 4. DEBUG: Log para verificar qual loja está sendo usada
   console.log(`DEBUG: lojaAtiva = ${lojaAtiva}, lojaAtualSegura = ${lojaAtualSegura?.nome}`);
 
@@ -262,6 +412,14 @@ export const AppProvider = ({ children }) => {
       setUserRole,
       setCurrentUser,
       temaAtual, // 🎨 VENDAS 3.3: Tema dinâmico
+      // 🔥 VENDAS 3.4: Funções Firebase
+      salvarTemaFirebase,
+      carregarTemaFirebase,
+      inicializarLojaFirebase,
+      salvarProdutoFirebase,
+      carregarProdutosFirebase,
+      salvarBannerFirebase,
+      carregarBannerFirebase,
       adicionarVenda,
       adicionarAoEstoque,
       adicionarCliente,
