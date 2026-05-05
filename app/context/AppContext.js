@@ -28,9 +28,45 @@ export const AppProvider = ({ children }) => {
   const [dadosCarregados, setDadosCarregados] = useState(false);
 
   const lojas = [
-    { id: '1', nome: 'Maranata Serviços Técnicos', cor: '#4CAF50', requerSenha: true },
-    { id: '2', nome: 'TechStore', cor: '#2196F3', requerSenha: true },
-    { id: '3', nome: 'Gadget Shop', cor: '#FF9800', requerSenha: false } // Cliente sem senha
+    { 
+      id: '1', 
+      nome: 'Maranata Serviços Técnicos', 
+      cor: '#4CAF50', 
+      requerSenha: true,
+      tema: {
+        primary: '#81C784',      // Verde claro (Catálogo)
+        secondary: '#4CAF50',   // Verde médio (Promoções)  
+        accent: '#2E7D32',      // Verde forte (Vendas)
+        background: '#E8F5E8',
+        text: '#1B5E20'         // Verde mais forte (Config)
+      }
+    },
+    { 
+      id: '2', 
+      nome: 'TechStore', 
+      cor: '#2196F3', 
+      requerSenha: true,
+      tema: {
+        primary: '#64B5F6',      // Azul claro (Catálogo)
+        secondary: '#2196F3',   // Azul médio (Promoções)
+        accent: '#0D47A1',      // Azul forte (Vendas)
+        background: '#E3F2FD',
+        text: '#01579B'         // Azul mais forte (Config)
+      }
+    },
+    { 
+      id: '3', 
+      nome: 'Gadget Shop', 
+      cor: '#FF9800', 
+      requerSenha: false,
+      tema: {
+        primary: '#FFB74D',      // Laranja claro (Catálogo)
+        secondary: '#FF9800',   // Laranja médio (Promoções)
+        accent: '#E65100',      // Laranja forte (Vendas)
+        background: '#FFF3E0',
+        text: '#BF360C'         // Laranja mais forte (Config)
+      }
+    }
   ];
 
   // Função para trocar de loja
@@ -191,7 +227,16 @@ export const AppProvider = ({ children }) => {
   // 2. OBJETO DE FALLBACK - Retorna null se nenhuma loja ativa para forçar lobby
   const lojaAtualSegura = lojas.find(loja => loja.id === lojaAtiva) || null;
 
-  // 3. DEBUG: Log para verificar qual loja está sendo usada
+  // 3. TEMA DINÂMICO - Obter tema da loja atual
+  const temaAtual = lojaAtualSegura?.tema || {
+    primary: '#4CAF50',
+    secondary: '#81C784',
+    accent: '#2E7D32',
+    background: '#E8F5E8',
+    text: '#1B5E20'
+  };
+
+  // 4. DEBUG: Log para verificar qual loja está sendo usada
   console.log(`DEBUG: lojaAtiva = ${lojaAtiva}, lojaAtualSegura = ${lojaAtualSegura?.nome}`);
 
   return (
@@ -216,6 +261,7 @@ export const AppProvider = ({ children }) => {
       setIsAuthenticated,
       setUserRole,
       setCurrentUser,
+      temaAtual, // 🎨 VENDAS 3.3: Tema dinâmico
       adicionarVenda,
       adicionarAoEstoque,
       adicionarCliente,

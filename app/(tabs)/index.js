@@ -5,7 +5,7 @@ import { useApp } from '../context/AppContext';
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const { perfil, vendas, lojaAtual, lojas, bannerLojaAtual, produtos, userRole, isAuthenticated, setLojaAtiva, logout } = useApp();
+  const { perfil, vendas, lojaAtual, lojas, bannerLojaAtual, produtos, userRole, isAuthenticated, setLojaAtiva, logout, temaAtual } = useApp();
   
   // Versão simplificada para testar no mobile
   const produtosSeguros = produtos || [];
@@ -40,34 +40,34 @@ export default function AdminDashboard() {
     router.replace('/lobby');
   };
   
-  // Cards simples para teste
+  // Cards dinâmicos baseados no tema da loja atual
   const cardsSimples = [
     {
       id: 'catalogo',
       title: 'Catálogo',
       icon: 'storefront-outline',
-      color: '#FF9800',
+      color: temaAtual?.primary || '#FF9800',
       route: '/catalogo'
     },
     {
       id: 'promocoes',
       title: 'Promoções',
       icon: 'flash-outline',
-      color: '#FF9800',
+      color: temaAtual?.secondary || '#FF9800',
       route: '/promocoes'
     },
     {
       id: 'vendas',
       title: 'Vendas',
       icon: 'cart-outline',
-      color: '#4CAF50',
+      color: temaAtual?.accent || '#4CAF50',
       route: '/vendas'
     },
     {
       id: 'config',
       title: 'Config',
       icon: 'settings-outline',
-      color: '#607D8B',
+      color: temaAtual?.text || '#607D8B',
       action: handleConfigAccess // Gatilho especial
     }
   ];
