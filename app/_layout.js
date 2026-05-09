@@ -9,8 +9,8 @@ export default function RootLayout() {
       <StatusBar barStyle="light-content" />
       <AppProvider>
         <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="lobby/index" />
-          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="lobby/index" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         </Stack>
       </AppProvider>
     </SafeAreaView>

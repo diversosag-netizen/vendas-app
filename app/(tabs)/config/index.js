@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -21,13 +21,29 @@ const bannerHeight = 150;
 
 export default function ConfigScreen() {
   const router = useRouter();
-  const { lojaAtual, atualizarBannerLoja, logout, setLojaAtiva } = useApp();
+  const { lojaAtual, atualizarBannerLoja, logout, setLojaAtiva, userRole, isAuthenticated, salvarProdutoFirebase } = useApp();
   
   // Estados para o banner
   const [bannerUrl, setBannerUrl] = useState(lojaAtual?.banner || '');
   const [previewUrl, setPreviewUrl] = useState(lojaAtual?.banner || '');
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+
+  // 🔐 VENDAS 3.2: Gatilho de Bloqueio - Proteção de Bastidores
+  useEffect(() => {
+    if (!isAuthenticated || userRole !== 'admin') {
+      Alert.alert(
+        'Acesso Restrito',
+        'Esta área é restrita a administradores. Você será redirecionado para a tela de login.',
+        [
+          {
+            text: 'OK',
+            onPress: () => router.replace('/login-admin')
+          }
+        ]
+      );
+    }
+  }, [isAuthenticated, userRole, router]);
 
   // ✅ Dados do usuário e loja
   const nomeLoja = lojaAtual?.nome || 'Minha Loja';
@@ -116,14 +132,34 @@ export default function ConfigScreen() {
     );
   };
 
-  // ✅ FUNÇÃO DE SAÍDA - Especificação Técnica Aplicada
+  // 🔐 VENDAS 3.2: Fluxo de Saída Administrativa - Reset Completo
   const handleLogout = () => {
-    setLojaAtiva(null);
-    if (Platform.OS === 'web') {
-      window.location.href = '/lobby';
-    } else {
-      router.replace('/lobby');
-    }
+    Alert.alert(
+      'Sair da Área Administrativa',
+      'Deseja sair da área administrativa e voltar ao lobby?',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel'
+        },
+        {
+          text: 'Sair',
+          style: 'destructive',
+          onPress: () => {
+            // Limpar estado de admin completamente
+            logout();
+            setLojaAtiva('1'); // Reset para loja padrão
+            
+            // Redirecionar para lobby
+            if (Platform.OS === 'web') {
+              window.location.href = '/lobby';
+            } else {
+              router.replace('/lobby');
+            }
+          }
+        }
+      ]
+    );
   };
 
   return (
@@ -208,6 +244,21 @@ export default function ConfigScreen() {
                 </View>
               </TouchableOpacity>
 
+              {/* 🎨 Card Identidade Visual - NOVO */}
+              <TouchableOpacity
+                style={styles.quickActionCard}
+                onPress={() => router.push('/(tabs)/config/identidade-visual')}
+                activeOpacity={0.8}
+              >
+                <View style={[styles.quickActionIcon, { backgroundColor: '#9C27B0' }]}>
+                  <Ionicons name="palette-outline" size={20} color="white" />
+                </View>
+                <View style={styles.quickActionContent}>
+                  <Text style={styles.quickActionTitle}>Identidade Visual</Text>
+                  <Text style={styles.quickActionSubtitle}>Personalizar tema</Text>
+                </View>
+              </TouchableOpacity>
+
               {/* Card Perfil */}
               <TouchableOpacity
                 style={styles.quickActionCard}
@@ -223,18 +274,18 @@ export default function ConfigScreen() {
                 </View>
               </TouchableOpacity>
 
-              {/* Card Sair */}
+              {/* 🔐 VENDAS 3.2: Card Sair da Área Administrativa */}
               <TouchableOpacity
                 style={styles.quickActionCard}
                 onPress={handleLogout}
                 activeOpacity={0.8}
               >
-                <View style={[styles.quickActionIcon, { backgroundColor: '#FF9800' }]}>
+                <View style={[styles.quickActionIcon, { backgroundColor: '#F44336' }]}>
                   <Ionicons name="log-out-outline" size={20} color="white" />
                 </View>
                 <View style={styles.quickActionContent}>
-                  <Text style={styles.quickActionTitle}>Sair da Loja</Text>
-                  <Text style={styles.quickActionSubtitle}>Escolher outra loja</Text>
+                  <Text style={styles.quickActionTitle}>Sair Admin</Text>
+                  <Text style={styles.quickActionSubtitle}>Voltar ao modo visitante</Text>
                 </View>
               </TouchableOpacity>
             </View>
