@@ -3,6 +3,7 @@
 
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
 // 🔥 CONFIGURAÇÃO DO FIREBASE (PROJETO VENDASAPP-95EDC)
 const firebaseConfig = {
@@ -20,7 +21,15 @@ const app = initializeApp(firebaseConfig);
 // Exportar Firestore
 export const db = getFirestore(app);
 
+// Exportar Storage para upload de imagens
+export const storage = getStorage(app);
+
 // Exportar configuração para debug
 export { firebaseConfig };
 
 console.log('🔥 Firebase inicializado com sucesso!');
+
+// Export default para compatibilidade com Expo Router
+export default function FirebaseConfig() {
+  return null; // Componente vazio para compatibilidade
+}

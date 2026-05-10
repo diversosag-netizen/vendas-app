@@ -11,7 +11,7 @@ import {
 import { useApp } from '../../context/AppContext';
 import Header from '../components/Header';
 
-export default function ConfigScreen() {
+export default function DashboardTesteScreen() {
   const router = useRouter();
   const { lojaAtual } = useApp();
   
@@ -112,10 +112,10 @@ export default function ConfigScreen() {
               <Ionicons name="information-circle-outline" size={24} color="white" />
             </View>
             <View style={styles.infoContent}>
-              <Text style={styles.infoTitle}>Painel de Configurações</Text>
+              <Text style={styles.infoTitle}>Painel de Teste</Text>
               <Text style={styles.infoSubtitle}>
-                Acesse todas as funcionalidades de gestão da sua loja.
-                Clique nos cards para navegar entre as seções.
+                Esta é uma página piloto para testar o novo layout de cards em grade.
+                Todos os botões devem navegar corretamente e o layout deve ser responsivo.
               </Text>
             </View>
           </View>
@@ -123,22 +123,22 @@ export default function ConfigScreen() {
 
         {/* 🧪 Botões de Teste */}
         <View style={styles.testSection}>
-          <Text style={styles.sectionTitle}>Ações Rápidas</Text>
+          <Text style={styles.sectionTitle}>Testes de Navegação</Text>
           
           <TouchableOpacity
             style={styles.testButton}
             onPress={() => router.back()}
           >
             <Ionicons name="arrow-back" size={20} color="white" />
-            <Text style={styles.testButtonText}>Voltar</Text>
+            <Text style={styles.testButtonText}>Testar Voltar (router.back)</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.testButton, { backgroundColor: '#2196F3' }]}
-            onPress={() => Alert.alert('Suporte', 'Central de ajuda em desenvolvimento!')}
+            onPress={() => Alert.alert('Teste', 'Botão de teste funcionando!')}
           >
-            <Ionicons name="help-circle-outline" size={20} color="white" />
-            <Text style={styles.testButtonText}>Ajuda</Text>
+            <Ionicons name="checkmark-circle" size={20} color="white" />
+            <Text style={styles.testButtonText}>Testar Alert</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

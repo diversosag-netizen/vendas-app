@@ -1,13 +1,12 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity
-} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import {
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
+} from 'react-native';
 import { useApp } from '../../context/AppContext';
 import Header from '../components/Header';
 
@@ -60,7 +59,7 @@ export default function PerfilScreen() {
       <View style={styles.backButtonContainer}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => router.push('/(tabs)/config')}
+          onPress={() => router.back()}
           activeOpacity={0.8}
         >
           <Ionicons name="arrow-back-outline" size={14} color="white" />

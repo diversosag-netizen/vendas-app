@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Dimensions, FlatList, Image, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Dimensions, FlatList, Image, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useApp } from '../context/AppContext';
 import Header from './components/Header';
 
@@ -305,112 +305,38 @@ export default function CatalogoScreen() {
         backgroundColor={lojaAtual?.cor || '#4CAF50'}
       />
 
-      {/* 🔐 VENDAS 3.2: ABAS - Catálogo para todos, Estoque apenas para Admins */}
-      <View style={styles.tabsContainer}>
-        <TouchableOpacity
-          style={[styles.tab, abaAtiva === 'catalogo' && styles.tabActive]}
-          onPress={() => setAbaAtiva('catalogo')}
-        >
-          <Text style={[styles.tabText, abaAtiva === 'catalogo' && styles.tabTextActive]}>
-            Catálogo
-          </Text>
-        </TouchableOpacity>
-        
-        {/* 🔐 VENDAS 3.2: Aba de Estoque apenas para Admins */}
-        {userRole === 'admin' && (
-          <TouchableOpacity
-            style={[styles.tab, abaAtiva === 'estoque' && styles.tabActive]}
-            onPress={() => setAbaAtiva('estoque')}
-          >
-            <Text style={[styles.tabText, abaAtiva === 'estoque' && styles.tabTextActive]}>
-              Gerenciar Estoque
-            </Text>
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {abaAtiva === 'catalogo' || (abaAtiva === 'estoque' && userRole !== 'admin') ? (
-        <>
-          {/* Banner */}
-          {bannerLojaAtual ? (
-            <Image
-              source={{ uri: bannerLojaAtual }}
-              style={[
-                styles.banner,
-                { width: screenWidth, height: bannerHeight }
-              ]}
-              resizeMode="cover"
-            />
+      {/* 📋 CATÁLOGO PARA CLIENTES */}
+      <View style={styles.produtosContainer}>
+        {produtosSeguros.length > 0 ? (
+          isMobile ? (
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalScroll}
+            >
+              {produtosSeguros.map(renderProduto)}
+            </ScrollView>
           ) : (
-            <View style={[styles.bannerPlaceholder, { backgroundColor: lojaAtual?.cor || '#4CAF50' }]}>
-              <Ionicons name="storefront-outline" size={40} color="white" />
-              <Text style={styles.bannerText}>
-                {lojaAtual?.nome || 'Catálogo'}
-              </Text>
-            </View>
-          )}
-
-          {/* Lista de Produtos */}
-          {produtosSeguros.length > 0 ? (
             <FlatList
               data={produtosSeguros}
               renderItem={renderProduto}
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={styles.produtosList}
-              numColumns={1}
+              keyExtractor={(item) => item.id || item.nome}
+              numColumns={2}
+              contentContainerStyle={styles.gridContainer}
             />
-          ) : (
-            <View style={styles.emptyState}>
-              <Ionicons name="cube-outline" size={60} color="#CCC" />
-              <Text style={styles.emptyStateTitle}>
-                Nenhum produto encontrado
-              </Text>
-              <Text style={styles.emptyStateSubtitle}>
-                Adicione produtos ao estoque para começar a vender
-              </Text>
-            </View>
-          )}
-        </>
-      ) : (
-        <>
-          {/* ✅ CONTEÚDO DE ESTOQUE INTEGRADO */}
-          {/* 🔐 VENDAS 3.2: Botão Gestão de Produtos apenas para Admins */}
-          {userRole === 'admin' && (
-            <View style={styles.addButtonContainer}>
-              <TouchableOpacity
-                style={[
-                  styles.addButton,
-                  { backgroundColor: lojaAtual?.cor || '#4CAF50' }
-                ]}
-                onPress={() => router.push('/(tabs)/config/gestao-produtos')}
-              >
-                <Ionicons name="settings-outline" size={24} color="white" />
-                <Text style={styles.addButtonText}>
-                  Gestão de Produtos
-                </Text>
-              </TouchableOpacity>
-            </View>
-          )}
-
-          {/* 🔐 VENDAS 3.2: Formulário movido para área restrita de configurações */}
-          {/* O formulário de cadastro de produtos foi movido para: 
-              app/(tabs)/config/gestao-produtos.js 
-              Apenas administradores têm acesso através do botão "Gestão de Produtos" */}
-          {produtosSeguros.length > 0 ? (
-            produtosSeguros.map(renderProdutoEstoque)
-          ) : (
-            <View style={styles.emptyState}>
-              <Ionicons name="cube-outline" size={60} color="#CCC" />
-              <Text style={styles.emptyStateTitle}>
-                Nenhum produto cadastrado
-              </Text>
-              <Text style={styles.emptyStateSubtitle}>
-                Adicione produtos para começar a gerenciar seu estoque
-              </Text>
-            </View>
-          )}
-        </>
-      )}
+          )
+        ) : (
+          <View style={styles.emptyState}>
+            <Ionicons name="cube-outline" size={60} color="#CCC" />
+            <Text style={styles.emptyStateTitle}>
+              Nenhum produto encontrado
+            </Text>
+            <Text style={styles.emptyStateSubtitle}>
+              Os produtos cadastrados aparecerão aqui
+            </Text>
+          </View>
+        )}
+      </View>
     </ScrollView>
     
     {/* ✅ BOTÃO VOLTAR - Parte inferior direita */}

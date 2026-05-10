@@ -64,6 +64,7 @@ export default function TabLayout() {
       <Tabs.Screen name="recibo" options={{ title: 'Recibo' }} />
       <Tabs.Screen name="vendas" options={{ title: 'Vendas' }} />
       <Tabs.Screen name="config/index" options={{ title: 'Config' }} />
+      <Tabs.Screen name="config/dashboard_teste" options={{ title: 'Dashboard Teste' }} />
     </Tabs>
   );
 }
