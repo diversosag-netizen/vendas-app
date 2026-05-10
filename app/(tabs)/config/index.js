@@ -1,12 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
     Image,
-    Platform,
     ScrollView,
     StyleSheet,
     Text,
@@ -21,7 +20,8 @@ const bannerHeight = 150;
 
 export default function ConfigScreen() {
   const router = useRouter();
-  const { lojaAtual, atualizarBannerLoja, logout, setLojaAtiva, userRole, isAuthenticated, salvarProdutoFirebase } = useApp();
+  const { lojaAtual, atualizarBannerLoja, perfil, togglePerfil, vendas, logout } = useApp();
+  const [abaAtiva, setAbaAtiva] = useState('config'); // 'config', 'profile' ou 'relatorios'
   
   // Estados para o banner
   const [bannerUrl, setBannerUrl] = useState(lojaAtual?.banner || '');
@@ -29,25 +29,10 @@ export default function ConfigScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
-  // 🔐 VENDAS 3.2: Gatilho de Bloqueio - Proteção de Bastidores
-  useEffect(() => {
-    if (!isAuthenticated || userRole !== 'admin') {
-      Alert.alert(
-        'Acesso Restrito',
-        'Esta área é restrita a administradores. Você será redirecionado para a tela de login.',
-        [
-          {
-            text: 'OK',
-            onPress: () => router.replace('/login-admin')
-          }
-        ]
-      );
-    }
-  }, [isAuthenticated, userRole, router]);
-
   // ✅ Dados do usuário e loja
   const nomeLoja = lojaAtual?.nome || 'Minha Loja';
   const corLoja = lojaAtual?.cor || '#4CAF50';
+  const usuarioNome = perfil?.nome || 'Usuário';
 
   // ✅ FUNÇÕES DO BANNER INTEGRADAS
   const pickImage = async () => {
@@ -132,11 +117,16 @@ export default function ConfigScreen() {
     );
   };
 
-  // 🔐 VENDAS 3.2: Fluxo de Saída Administrativa - Reset Completo
-  const handleLogout = () => {
+  // ✅ FUNÇÕES DO PROFILE INTEGRADAS
+  const handleTogglePerfil = () => {
+    togglePerfil();
+    Alert.alert('Sucesso', 'Perfil alternado com sucesso!');
+  };
+
+  const handleExitStore = () => {
     Alert.alert(
-      'Sair da Área Administrativa',
-      'Deseja sair da área administrativa e voltar ao lobby?',
+      'Sair da Loja',
+      'Deseja sair da loja atual?',
       [
         {
           text: 'Cancelar',
@@ -146,34 +136,154 @@ export default function ConfigScreen() {
           text: 'Sair',
           style: 'destructive',
           onPress: () => {
-            // Limpar estado de admin completamente
-            logout();
-            setLojaAtiva('1'); // Reset para loja padrão
-            
-            // Redirecionar para lobby
-            if (Platform.OS === 'web') {
-              window.location.href = '/lobby';
-            } else {
-              router.replace('/lobby');
-            }
+            // Lógica para sair da loja
+            router.push('/');
           }
         }
       ]
     );
   };
 
+  const handleLogout = () => {
+    Alert.alert(
+      'Sair do App',
+      'Deseja sair do aplicativo?',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel'
+        },
+        {
+          text: 'Sair',
+          style: 'destructive',
+          onPress: () => {
+            logout();
+            router.push('/');
+          }
+        }
+      ]
+    );
+  };
+
+  // ✅ FUNÇÕES DE RELATÓRIOS INTEGRADAS
+  const handleExportarRelatorio = () => {
+    Alert.alert(
+      'Exportar Relatório',
+      'Deseja exportar o relatório de vendas?',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel'
+        },
+        {
+          text: 'Exportar',
+          onPress: () => {
+            Alert.alert('Sucesso', 'Relatório exportado com sucesso!');
+          }
+        }
+      ]
+    );
+  };
+
+  // ✅ DADOS DE RELATÓRIOS
+  const vendasPorData = {};
+  (vendas || []).forEach(venda => {
+    const data = venda.data || 'Sem data';
+    if (!vendasPorData[data]) {
+      vendasPorData[data] = [];
+    }
+    vendasPorData[data].push(venda);
+  });
+
+  // ✅ MENU ITEMS DO PROFILE INTEGRADOS
+  const menuItems = [
+    {
+      id: '1',
+      title: 'Configurações da Loja',
+      icon: 'storefront-outline',
+      color: '#4CAF50',
+      onPress: () => setAbaAtiva('config')
+    },
+    {
+      id: '2',
+      title: 'Relatórios de Vendas',
+      icon: 'stats-chart-outline',
+      color: '#2196F3',
+      onPress: () => setAbaAtiva('relatorios')
+    },
+    {
+      id: '3',
+      title: 'Sair da Loja',
+      icon: 'log-out-outline',
+      color: '#FF9800',
+      onPress: handleExitStore
+    },
+    {
+      id: '4',
+      title: 'Sair do App',
+      icon: 'power-outline',
+      color: '#FF3B30',
+      onPress: handleLogout
+    }
+  ];
+
+  const renderMenuItem = (item) => (
+    <TouchableOpacity
+      key={item.id}
+      style={styles.menuItem}
+      onPress={item.onPress}
+      activeOpacity={0.8}
+    >
+      <View style={[styles.iconContainer, { backgroundColor: item.color }]}>
+        <Ionicons name={item.icon} size={24} color="white" />
+      </View>
+      <Text style={styles.menuItemText}>{item.title}</Text>
+      <Ionicons name="chevron-forward" size={20} color="#CCC" />
+    </TouchableOpacity>
+  );
+
   return (
     <>
       <ScrollView style={styles.container}>
-        {/* ✅ CABEÇALHO DINÂMICO: Componente único com props */}
-        <Header 
-          title="Configurações"
-          subtitle={nomeLoja}
-          backgroundColor={corLoja}
-        />
-        
-        {/* ✅ CARDS MODERNOS - Layout em Grade */}
-        <View style={styles.cardsContainer}>
+      {/* ✅ CABEÇALHO DINÂMICO: Componente único com props */}
+      <Header 
+        title="Configurações"
+        subtitle={nomeLoja}
+        backgroundColor={corLoja}
+      />
+
+      {/* ✅ ABAS INTEGRADAS: Config, Profile e Relatórios */}
+      <View style={styles.tabsContainer}>
+        <TouchableOpacity
+          style={[styles.tab, abaAtiva === 'config' && styles.tabActive]}
+          onPress={() => setAbaAtiva('config')}
+        >
+          <Text style={[styles.tabText, abaAtiva === 'config' && styles.tabTextActive]}>
+            Loja
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, abaAtiva === 'profile' && styles.tabActive]}
+          onPress={() => setAbaAtiva('profile')}
+        >
+          <Text style={[styles.tabText, abaAtiva === 'profile' && styles.tabTextActive]}>
+            Perfil
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, abaAtiva === 'relatorios' && styles.tabActive]}
+          onPress={() => setAbaAtiva('relatorios')}
+        >
+          <Text style={[styles.tabText, abaAtiva === 'relatorios' && styles.tabTextActive]}>
+            Relatórios
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {abaAtiva === 'config' ? (
+        <>
+          {/* ✅ CARDS MODERNOS - Layout em Grade */}
+          <View style={styles.cardsContainer}>
             {/* Card Banner */}
             <View style={styles.configCard}>
               <View style={styles.cardHeader}>
@@ -227,82 +337,115 @@ export default function ConfigScreen() {
               </View>
             </View>
 
-            {/* ✅ CARDS DE AÇÕES RÁPIDAS - Grade 2x2 */}
-            <View style={styles.quickActionsGrid}>
-              {/* Card Relatórios */}
-              <TouchableOpacity
-                style={styles.quickActionCard}
-                onPress={() => router.push('/(tabs)/config/relatorios')}
-                activeOpacity={0.8}
-              >
-                <View style={[styles.quickActionIcon, { backgroundColor: '#2196F3' }]}>
-                  <Ionicons name="stats-chart-outline" size={20} color="white" />
-                </View>
-                <View style={styles.quickActionContent}>
-                  <Text style={styles.quickActionTitle}>Relatórios</Text>
-                  <Text style={styles.quickActionSubtitle}>Ver vendas</Text>
-                </View>
-              </TouchableOpacity>
-
-              {/* 🎨 Card Identidade Visual - NOVO */}
-              <TouchableOpacity
-                style={styles.quickActionCard}
-                onPress={() => router.push('/(tabs)/config/identidade-visual')}
-                activeOpacity={0.8}
-              >
-                <View style={[styles.quickActionIcon, { backgroundColor: '#9C27B0' }]}>
-                  <Ionicons name="palette-outline" size={20} color="white" />
-                </View>
-                <View style={styles.quickActionContent}>
-                  <Text style={styles.quickActionTitle}>Identidade Visual</Text>
-                  <Text style={styles.quickActionSubtitle}>Personalizar tema</Text>
-                </View>
-              </TouchableOpacity>
-
-              {/* Card Perfil */}
-              <TouchableOpacity
-                style={styles.quickActionCard}
-                onPress={() => router.push('/(tabs)/config/perfil')}
-                activeOpacity={0.8}
-              >
-                <View style={[styles.quickActionIcon, { backgroundColor: '#9C27B0' }]}>
-                  <Ionicons name="person-outline" size={20} color="white" />
-                </View>
-                <View style={styles.quickActionContent}>
-                  <Text style={styles.quickActionTitle}>Perfil</Text>
-                  <Text style={styles.quickActionSubtitle}>Meus dados</Text>
-                </View>
-              </TouchableOpacity>
-
-              {/* 🔐 VENDAS 3.2: Card Sair da Área Administrativa */}
-              <TouchableOpacity
-                style={styles.quickActionCard}
-                onPress={handleLogout}
-                activeOpacity={0.8}
-              >
-                <View style={[styles.quickActionIcon, { backgroundColor: '#F44336' }]}>
-                  <Ionicons name="log-out-outline" size={20} color="white" />
-                </View>
-                <View style={styles.quickActionContent}>
-                  <Text style={styles.quickActionTitle}>Sair Admin</Text>
-                  <Text style={styles.quickActionSubtitle}>Voltar ao modo visitante</Text>
-                </View>
-              </TouchableOpacity>
+            {/* ✅ BOTÃO GERENCIAR CATÁLOGO - NOVO */}
+            <View style={styles.configCard}>
+              <View style={styles.cardHeader}>
+                <Ionicons name="settings-outline" size={24} color="#1976D2" />
+                <Text style={styles.cardTitle}>Gerenciar Catálogo</Text>
+              </View>
+              
+              <View style={styles.cardContent}>
+                <Text style={styles.catalogDescription}>
+                  Adicione e edite produtos da sua loja. Faça upload de imagens PNG/JPEG e configure categorias de energia solar.
+                </Text>
+              </View>
+              
+              <View style={styles.cardActions}>
+                <TouchableOpacity
+                  style={[styles.cardButton, { backgroundColor: '#1976D2' }]}
+                  onPress={() => router.push('/login-admin/gestao/adicionar-produto')}
+                >
+                  <Ionicons name="settings-outline" size={20} color="white" />
+                  <Text style={styles.cardButtonText}>Gerenciar Catálogo</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-      </ScrollView>
+        </>
+      ) : (
+        <>
+          {/* ✅ CONTEÚDO DO PROFILE INTEGRADO */}
+          {/* Header */}
+          <View style={[styles.profileHeader, { backgroundColor: corLoja }]}>
+            <TouchableOpacity style={styles.backButton} onPress={() => setAbaAtiva('config')}>
+              <Ionicons name="arrow-back" size={24} color="white" />
+            </TouchableOpacity>
+            <View style={styles.headerContent}>
+              <Text style={styles.headerTitle}>Perfil</Text>
+              <Text style={styles.headerSubtitle}>
+                {nomeLoja}
+              </Text>
+            </View>
+          </View>
+
+          {/* User Info */}
+          <View style={styles.userInfoContainer}>
+            <View style={styles.avatarContainer}>
+              <View style={[styles.avatar, { backgroundColor: corLoja }]}>
+                <Ionicons name="person-outline" size={40} color="white" />
+              </View>
+            </View>
+            <Text style={styles.userName}>{usuarioNome}</Text>
+            <Text style={styles.userEmail}>usuario@exemplo.com</Text>
+            
+            <TouchableOpacity
+              style={[styles.toggleButton, { backgroundColor: '#007AFF' }]}
+              onPress={handleTogglePerfil}
+            >
+              <Ionicons name="swap-horizontal-outline" size={20} color="white" />
+              <Text style={styles.toggleButtonText}>Alternar Perfil</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Menu */}
+          <View style={styles.menuContainer}>
+            <Text style={styles.sectionTitle}>Ações do Perfil</Text>
+            {menuItems.map(renderMenuItem)}
+          </View>
+        </>
+      )}
       
-      {/* ✅ BOTÃO VOLTAR - Parte inferior direita */}
-      <View style={styles.backButtonContainer}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.push('/')}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="arrow-back-outline" size={14} color="white" />
-          <Text style={styles.backButtonText}>Voltar</Text>
-        </TouchableOpacity>
-      </View>
+      {abaAtiva === 'relatorios' && (
+        <>
+          {/* ✅ CONTEÚDO DE RELATÓRIOS INTEGRADO */}
+          {/* Header */}
+          <View style={[styles.profileHeader, { backgroundColor: corLoja }]}>
+            <TouchableOpacity style={styles.backButton} onPress={() => setAbaAtiva('config')}>
+              <Ionicons name="arrow-back" size={24} color="white" />
+            </TouchableOpacity>
+            <View style={styles.headerContent}>
+              <Text style={styles.headerTitle}>Relatórios</Text>
+              <Text style={styles.headerSubtitle}>
+                Análise de Vendas
+              </Text>
+            </View>
+          </View>
+
+          {/* Statistics Cards */}
+          <View style={styles.statsContainer}>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>{vendas?.length || 0}</Text>
+              <Text style={styles.statLabel}>Vendas Realizadas</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>{Object.keys(vendasPorData).length}</Text>
+              <Text style={styles.statLabel}>Dias com Vendas</Text>
+            </View>
+          </View>
+
+          {/* Export Button */}
+          <View style={styles.exportContainer}>
+            <TouchableOpacity
+              style={[styles.exportButton, { backgroundColor: corLoja }]}
+              onPress={handleExportarRelatorio}
+            >
+              <Ionicons name="download-outline" size={20} color="white" />
+              <Text style={styles.exportButtonText}>Exportar Relatório</Text>
+            </TouchableOpacity>
+          </View>
+        </>
+      )}
+    </ScrollView>
     </>
   );
 }
@@ -311,6 +454,38 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8F9FA'
+  },
+  // ✅ ESTILOS DAS ABAS
+  tabsContainer: {
+    flexDirection: 'row',
+    backgroundColor: 'white',
+    margin: 20,
+    borderRadius: 12,
+    padding: 4,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center'
+  },
+  tabActive: {
+    backgroundColor: '#F0F0F0'
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#666'
+  },
+  tabTextActive: {
+    color: '#333',
+    fontWeight: '600'
   },
   // ✅ ESTILOS DOS CARDS MODERNOS
   cardsContainer: {
@@ -384,76 +559,152 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600'
   },
-  // ✅ ESTILOS DOS CARDS DE AÇÕES RÁPIDAS - Botões Uniformes como o "Selecionar"
-  quickActionsGrid: {
-    flexDirection: 'column',
-    gap: 12,
-    marginTop: 8
+  catalogDescription: {
+    fontSize: 14,
+    color: '#666',
+    lineHeight: 20,
+    textAlign: 'center'
   },
-  quickActionCard: {
+  // ✅ ESTILOS DO PROFILE (mantidos)
+  profileHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 60,
+    paddingBottom: 20,
+    paddingHorizontal: 20
+  },
+  backButton: {
+    padding: 8
+  },
+  headerContent: {
+    flex: 1,
+    marginLeft: 16
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: 'white'
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.8)'
+  },
+  userInfoContainer: {
+    alignItems: 'center',
+    padding: 40
+  },
+  avatarContainer: {
+    marginBottom: 20
+  },
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  userName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 8
+  },
+  userEmail: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 24
+  },
+  toggleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 25,
+    gap: 8
+  },
+  toggleButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600'
+  },
+  menuContainer: {
+    padding: 20
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 16
+  },
+  menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'white',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    gap: 12,
-    width: '100%' // Botões de largura total uniformes
+    shadowRadius: 2
   },
-  quickActionIcon: {
+  iconContainer: {
     width: 40,
     height: 40,
     borderRadius: 20,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    marginRight: 16
   },
-  quickActionContent: {
+  menuItemText: {
     flex: 1,
-    alignItems: 'flex-start'
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#333'
   },
-  quickActionTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 2
+  // ✅ ESTILOS DOS RELATÓRIOS (mantidos)
+  statsContainer: {
+    flexDirection: 'row',
+    padding: 20,
+    gap: 16
   },
-  quickActionSubtitle: {
-    fontSize: 13,
-    color: '#666'
+  statCard: {
+    flex: 1,
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2
   },
-  // ✅ ESTILOS ADICIONAIS
-  fullWidthCard: {
-    width: '100%'
+  statValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333'
   },
-  // ✅ ESTILOS DO BOTÃO VOLTAR
-  backButtonContainer: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
-    zIndex: 1000
+  statLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 4
   },
-  backButton: {
+  exportContainer: {
+    padding: 20
+  },
+  exportButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 15,
-    height: 40,
-    borderRadius: 20,
-    gap: 8,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4
+    justifyContent: 'center',
+    padding: 16,
+    borderRadius: 12,
+    gap: 8
   },
-  backButtonText: {
+  exportButtonText: {
     color: 'white',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600'
   }
 });

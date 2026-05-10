@@ -1,6 +1,7 @@
 // Version 3.1 - Refactor
 import { collection, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from 'firebase/firestore';
 import { createContext, useContext, useState } from 'react';
+import { db } from '../config/firebase';
 
 const AppContext = createContext();
 

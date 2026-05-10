@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Dimensions, FlatList, Image, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Dimensions, FlatList, Image, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useApp } from '../context/AppContext';
 import Header from './components/Header';
 
@@ -197,7 +197,7 @@ export default function CatalogoScreen() {
             >
               <Ionicons name="cart-outline" size={18} color="white" />
               <Text style={styles.buyButtonText}>
-                {item.estoque > 0 ? 'Adicionar ao Orçamento' : 'Esgotado'}
+                {item.estoque > 0 ? 'Comprar' : 'Esgotado'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -605,7 +605,9 @@ const styles = StyleSheet.create({
   vitrineImage: {
     width: '100%',
     height: 250,
-    backgroundColor: '#F5F5F5'
+    backgroundColor: '#F5F5F5',
+    borderRadius: 0,
+    alignSelf: 'center'
   },
   stockBadge: {
     position: 'absolute',
@@ -614,12 +616,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#4CAF50',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 12,
-    zIndex: 1
+    borderRadius: 12
   },
   stockBadgeText: {
     color: 'white',
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '600'
   },
   outOfStockBadge: {
@@ -629,67 +630,59 @@ const styles = StyleSheet.create({
     backgroundColor: '#F44336',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 12,
-    zIndex: 1
+    borderRadius: 12
   },
   outOfStockBadgeText: {
     color: 'white',
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '600'
   },
   vitrineInfo: {
-    padding: 15
+    padding: 16
   },
   productCode: {
-    fontSize: 11,
+    fontSize: 12,
     color: '#999',
-    marginBottom: 5
+    fontWeight: '500',
+    marginBottom: 4
   },
   vitrineNome: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 5
+    marginBottom: 8,
+    lineHeight: 24
   },
   vitrineReferencia: {
-    fontSize: 13,
+    fontSize: 14,
     color: '#666',
-    marginBottom: 10,
+    marginBottom: 12,
     lineHeight: 18
   },
   priceContainer: {
-    marginBottom: 15
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16
   },
   vitrinePreco: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#1976D2',
-    marginBottom: 5
-  },
-  categoryBadge: {
-    fontSize: 12,
-    color: '#1976D2',
-    backgroundColor: '#E3F2FD',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginTop: 4,
-    fontWeight: '500'
+    color: '#2E7D32',
+    flex: 1
   },
   availabilityText: {
-    fontSize: 11,
+    fontSize: 12,
     color: '#4CAF50',
-    fontWeight: '500',
-    marginTop: 2
+    fontWeight: '600'
   },
   buyButton: {
-    backgroundColor: '#1976D2',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: 8,
-    gap: 6,
+    paddingVertical: 14,
+    borderRadius: 12,
+    gap: 8,
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -698,14 +691,35 @@ const styles = StyleSheet.create({
   },
   buyButtonText: {
     color: 'white',
-    fontSize: 14,
-    fontWeight: '600'
+    fontSize: 16,
+    fontWeight: 'bold'
   },
-  // 🔧 VENDAS 3.2: ESTILOS DE GESTÃO PARA ADMINS
+  // ✅ ESTILOS DE ESTOQUE INTEGRADOS
   addButtonContainer: {
-    padding: 20,
+    padding: 20
+  },
+  addButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 15,
+    borderRadius: 12,
+    gap: 8,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2
+  },
+  addButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold'
+  },
+  formContainer: {
     backgroundColor: 'white',
     margin: 20,
+    padding: 20,
     borderRadius: 12,
     elevation: 2,
     shadowColor: '#000',
@@ -713,32 +727,83 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2
   },
-  addButton: {
-    backgroundColor: '#4CAF50',
+  formTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 20,
+    textAlign: 'center'
+  },
+  inputContainer: {
+    marginBottom: 15
+  },
+  inputRow: {
+    flexDirection: 'row',
+    gap: 15
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 5
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 14,
+    backgroundColor: '#F8F9FA'
+  },
+  inputMultiline: {
+    height: 80,
+    textAlignVertical: 'top'
+  },
+  saveButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 15,
     borderRadius: 8,
-    gap: 10,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4
+    gap: 8,
+    marginTop: 10
   },
-  addButtonText: {
+  saveButtonText: {
     color: 'white',
     fontSize: 16,
-    fontWeight: '600'
+    fontWeight: 'bold'
+  },
+  produtosContainer: {
+    padding: 20
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 15
   },
   removeButton: {
-    backgroundColor: '#F44336',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FF3B30',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    gap: 4,
+    alignSelf: 'flex-start'
+  },
+  removeButtonText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '600'
+  },
+  // VENDAS 3.1: Estilos do Botão Adicionar ao Carrinho
+  addToCartButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
     paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 6,
     gap: 6,
     marginTop: 8,
@@ -748,7 +813,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2
   },
-  removeButtonText: {
+  addToCartButtonText: {
     color: 'white',
     fontSize: 12,
     fontWeight: '600'
@@ -778,5 +843,22 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 14,
     fontWeight: '600'
+  },
+  // ESTILOS PARA TEMA AZUL/ENERGIA
+  categoryBadge: {
+    fontSize: 12,
+    color: '#1976D2',
+    backgroundColor: '#E3F2FD',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 4,
+    fontWeight: '500'
+  },
+  availabilityText: {
+    fontSize: 11,
+    color: '#4CAF50',
+    fontWeight: '500',
+    marginTop: 2
   }
 });

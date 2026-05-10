@@ -9,8 +9,12 @@ export default function RootLayout() {
       <StatusBar barStyle="light-content" />
       <AppProvider>
         <Stack screenOptions={{ headerShown: false }}>
+          {/* 🛒 E-COMMERCE: Acesso livre para clientes */}
           <Stack.Screen name="lobby/index" options={{ headerShown: false }} />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          
+          {/* 🔐 Login apenas para área administrativa */}
+          <Stack.Screen name="login-admin/index" options={{ headerShown: false }} />
         </Stack>
       </AppProvider>
     </SafeAreaView>
